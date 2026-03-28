@@ -72,11 +72,51 @@ const PlotManager = {
         const preset = GraphDefinitions.getPreset(category, presetName);
         if (!preset) return;
 
-        this.addPlot({
-            title: preset.name,
-            expressions: preset.expressions,
-            yAxes: preset.yAxes || [{ title: '' }]
-        });
+        const mergeCheck = document.getElementById('toggle-merge-plot');
+        const shouldMerge = mergeCheck && mergeCheck.checked;
+
+        if (shouldMerge && State.plots.length > 0) {
+            this.mergeIntoLastPlot({
+                title: preset.name,
+                expressions: preset.expressions
+            });
+        } else {
+            this.addPlot({
+                title: preset.name,
+                expressions: preset.expressions,
+            });
+        }
+    },
+
+    mergeIntoLastPlot(config) {
+        const lastPlot = State.plots[State.plots.length - 1];
+        if (!lastPlot) return this.addPlot(config);
+
+        const plotArea = document.getElementById(lastPlot.id + '-area');
+        if (!plotArea || !plotArea.data) return this.addPlot(config);
+
+        const newTraces = [];
+        const existingCount = plotArea.data.length;
+
+        if (config.expressions) {
+            config.expressions.forEach((expr, i) => {
+                const trace = this.resolveExpression(expr, existingCount + i);
+                if (trace) newTraces.push(trace);
+            });
+        }
+
+        if (newTraces.length === 0) return;
+
+        Plotly.addTraces(plotArea, newTraces);
+
+        // Update title
+        const header = document.querySelector('#' + lastPlot.id + ' .plot-title');
+        if (header) {
+            header.textContent = header.textContent + ' + ' + config.title;
+        }
+
+        lastPlot.config.expressions = (lastPlot.config.expressions || []).concat(config.expressions);
+        lastPlot.traces = lastPlot.traces.concat(newTraces);
     },
 
     addPlot(config) {

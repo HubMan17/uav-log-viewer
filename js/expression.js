@@ -147,11 +147,20 @@ const ExpressionEditor = {
         if (!value) return;
 
         const expressions = value.split(/\s+/).filter(Boolean);
+        const mergeCheck = document.getElementById('toggle-merge-plot');
+        const shouldMerge = mergeCheck && mergeCheck.checked;
 
-        PlotManager.addPlot({
-            title: value,
-            expressions: expressions
-        });
+        if (shouldMerge && State.plots.length > 0) {
+            PlotManager.mergeIntoLastPlot({
+                title: value,
+                expressions: expressions
+            });
+        } else {
+            PlotManager.addPlot({
+                title: value,
+                expressions: expressions
+            });
+        }
 
         this.input.value = '';
         this.hideSuggestions();

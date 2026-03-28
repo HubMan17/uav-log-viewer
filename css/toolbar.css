@@ -98,3 +98,32 @@
     background: var(--bg-tertiary);
     color: var(--accent);
 }
+
+.toolbar-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    user-select: none;
+    transition: all var(--transition);
+}
+
+.toolbar-toggle:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.toolbar-toggle input {
+    display: none;
+}
+
+.toolbar-toggle input:checked ~ .toolbar-toggle-label {
+    color: var(--accent);
+}
+
+.toolbar-toggle-label {
+    white-space: nowrap;
+}
