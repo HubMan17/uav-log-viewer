@@ -146,20 +146,23 @@ const PlotManager = {
         const match = expr.match(/^(\w+)(?:\[(\d+)\])?\.(\w+)$/);
         if (!match) return null;
 
-        const [, msgType, instance, field] = match;
+        let [, msgType, instance, field] = match;
+
+        // Handle instance bracket notation: IMU[0] -> IMU, IMU[1] -> IMU2, IMU[2] -> IMU3
+        // ArduPilot stores instances as separate message types (IMU, IMU2, IMU3, etc.)
+        if (instance !== undefined) {
+            const instNum = parseInt(instance, 10);
+            if (instNum > 0) {
+                msgType = msgType + (instNum + 1);
+            }
+            // instance 0 means the base type (e.g., IMU[0] -> IMU)
+        }
+
         const msgData = State.messages[msgType];
         if (!msgData || !msgData.data) return null;
 
-        let timeData, fieldData;
-
-        if (instance !== undefined && msgData.instances && msgData.instances[instance]) {
-            const inst = msgData.instances[instance];
-            timeData = inst.TimeUS;
-            fieldData = inst[field];
-        } else {
-            timeData = msgData.data.TimeUS;
-            fieldData = msgData.data[field];
-        }
+        const timeData = msgData.data.TimeUS;
+        const fieldData = msgData.data[field];
 
         if (!timeData || !fieldData) return null;
 
