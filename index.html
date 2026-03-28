@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAV Log Viewer</title>
+    <meta name="description" content="Open-source offline viewer for ArduPilot UAV log files (.BIN, .LOG, .TLOG)">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/plot.css">
+    <link rel="stylesheet" href="css/map.css">
+    <link rel="stylesheet" href="css/toolbar.css">
+    <link rel="stylesheet" href="css/timebar.css">
+    <link rel="stylesheet" href="libs/fontawesome/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Home / Upload Page -->
+        <div id="home-page" class="page active">
+            <div class="home-container">
+                <div class="home-header">
+                    <h1>UAV Log Viewer</h1>
+                    <p class="subtitle">Open-source offline viewer for ArduPilot flight logs</p>
+                </div>
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p class="upload-text">Drop a log file here or click to browse</p>
+                    <p class="upload-hint">Supports .BIN, .LOG, and .TLOG files</p>
+                    <input type="file" id="file-input" accept=".bin,.BIN,.log,.LOG,.tlog,.TLOG" hidden>
+                </div>
+                <div class="upload-progress" id="upload-progress" style="display:none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p class="progress-text" id="progress-text">Processing...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plot / Analysis Page -->
+        <div id="plot-page" class="page">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="sidebar">
+                <div class="sidebar-header">
+                    <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <span class="sidebar-title">UAV Log Viewer</span>
+                </div>
+                <div class="sidebar-menu">
+                    <button class="sidebar-btn" data-panel="flight-modes" title="Flight Modes">
+                        <i class="fas fa-plane"></i>
+                        <span>Flight Modes</span>
+                    </button>
+                    <button class="sidebar-btn" data-panel="messages" title="Messages">
+                        <i class="fas fa-comment-alt"></i>
+                        <span>Messages</span>
+                    </button>
+                    <button class="sidebar-btn" data-panel="params" title="Parameters">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Parameters</span>
+                    </button>
+                    <button class="sidebar-btn" data-panel="device-ids" title="Device IDs">
+                        <i class="fas fa-microchip"></i>
+                        <span>Device IDs</span>
+                    </button>
+                    <button class="sidebar-btn" data-panel="attitude" title="Attitude">
+                        <i class="fas fa-compass"></i>
+                        <span>Attitude</span>
+                    </button>
+                    <button class="sidebar-btn" data-panel="ekf" title="EKF Helper">
+                        <i class="fas fa-chart-line"></i>
+                        <span>EKF Helper</span>
+                    </button>
+                    <button class="sidebar-btn" data-panel="magfit" title="Mag Fit">
+                        <i class="fas fa-magnet"></i>
+                        <span>Mag Fit</span>
+                    </button>
+                    <button class="sidebar-btn active" data-panel="map-settings" title="Map">
+                        <i class="fas fa-globe"></i>
+                        <span>Map</span>
+                    </button>
+                </div>
+                <div class="sidebar-bottom">
+                    <button class="sidebar-btn" id="btn-new-file" title="Open new file">
+                        <i class="fas fa-folder-open"></i>
+                        <span>New File</span>
+                    </button>
+                </div>
+
+                <!-- Sidebar Panels -->
+                <div class="sidebar-panels">
+                    <div class="sidebar-panel" id="panel-flight-modes">
+                        <h3>Flight Modes</h3>
+                        <div class="panel-content" id="flight-modes-list"></div>
+                    </div>
+                    <div class="sidebar-panel" id="panel-messages">
+                        <h3>Messages</h3>
+                        <div class="panel-content" id="messages-list"></div>
+                    </div>
+                    <div class="sidebar-panel" id="panel-params">
+                        <h3>Parameters</h3>
+                        <input type="text" class="param-search" id="param-search" placeholder="Search parameters...">
+                        <div class="panel-content" id="params-list"></div>
+                    </div>
+                    <div class="sidebar-panel" id="panel-device-ids">
+                        <h3>Device IDs</h3>
+                        <div class="panel-content" id="device-ids-list"></div>
+                    </div>
+                    <div class="sidebar-panel" id="panel-attitude">
+                        <h3>Attitude</h3>
+                        <div class="panel-content" id="attitude-display"></div>
+                    </div>
+                    <div class="sidebar-panel" id="panel-ekf">
+                        <h3>EKF Helper</h3>
+                        <div class="panel-content" id="ekf-display"></div>
+                    </div>
+                    <div class="sidebar-panel" id="panel-magfit">
+                        <h3>Mag Fit</h3>
+                        <div class="panel-content" id="magfit-display"></div>
+                    </div>
+                    <div class="sidebar-panel" id="panel-map-settings">
+                        <h3>Map Settings</h3>
+                        <div class="panel-content">
+                            <div class="map-setting-group">
+                                <label>Trajectory</label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="toggle-trajectory" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="map-setting-group">
+                                <label>Waypoints</label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="toggle-waypoints" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="map-setting-group">
+                                <label>Fences</label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="toggle-fences" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="map-setting-group">
+                                <label>Camera Mode</label>
+                                <select id="camera-mode">
+                                    <option value="follow">Follow</option>
+                                    <option value="chase">Chase</option>
+                                    <option value="free">Free</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Toolbar -->
+                <div class="toolbar" id="toolbar">
+                    <div class="toolbar-left">
+                        <div class="graph-selector">
+                            <select id="graph-category" class="toolbar-select">
+                                <option value="">Select Graph Category</option>
+                            </select>
+                            <select id="graph-preset" class="toolbar-select">
+                                <option value="">Select Graph</option>
+                            </select>
+                            <button class="toolbar-btn" id="btn-add-graph" title="Add Graph">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="expression-input-wrapper">
+                            <input type="text" id="expression-input" class="expression-input" placeholder="Expression: e.g. ATT.Roll ATT.Pitch">
+                            <div class="suggestions-box" id="suggestions-box"></div>
+                            <button class="toolbar-btn" id="btn-add-expression" title="Plot Expression">
+                                <i class="fas fa-chart-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="toolbar-btn" id="btn-clear-plots" title="Clear All Plots">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div class="map-container" id="map-container">
+                    <div id="cesium-viewer"></div>
+                    <div class="map-overlay" id="map-overlay" style="display:none;">
+                        <p>No GPS data available</p>
+                    </div>
+                </div>
+
+                <!-- Plot Container -->
+                <div class="plot-container" id="plot-container"></div>
+
+                <!-- Time Bar -->
+                <div class="timebar" id="timebar">
+                    <div class="timebar-controls">
+                        <button class="timebar-btn" id="btn-play" title="Play/Pause">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <span class="timebar-time" id="timebar-current">0:00</span>
+                        <div class="timebar-track" id="timebar-track">
+                            <div class="timebar-progress" id="timebar-progress"></div>
+                            <div class="timebar-cursor" id="timebar-cursor"></div>
+                            <div class="timebar-modes" id="timebar-modes"></div>
+                        </div>
+                        <span class="timebar-time" id="timebar-total">0:00</span>
+                        <div class="timebar-speed">
+                            <select id="playback-speed">
+                                <option value="0.5">0.5x</option>
+                                <option value="1" selected>1x</option>
+                                <option value="2">2x</option>
+                                <option value="5">5x</option>
+                                <option value="10">10x</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Application Scripts -->
+    <script src="libs/plotly/plotly-basic.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/parsers/dataflash.js"></script>
+    <script src="js/parsers/mavlink.js"></script>
+    <script src="js/graph-definitions.js"></script>
+    <script src="js/flight-modes.js"></script>
+    <script src="js/upload.js"></script>
+    <script src="js/plot.js"></script>
+    <script src="js/expression.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/timebar.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

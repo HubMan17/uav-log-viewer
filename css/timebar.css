@@ -1,0 +1,89 @@
+.timebar {
+    height: var(--timebar-height);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.timebar-controls {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 12px;
+    gap: 8px;
+}
+
+.timebar-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    transition: all var(--transition);
+}
+
+.timebar-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--accent);
+}
+
+.timebar-btn.playing i::before {
+    content: "\f04c";
+}
+
+.timebar-time {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: monospace;
+    min-width: 50px;
+    text-align: center;
+}
+
+.timebar-track {
+    flex: 1;
+    height: 24px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.timebar-progress {
+    height: 100%;
+    background: rgba(79, 195, 247, 0.15);
+    border-radius: 4px;
+    width: 0%;
+    pointer-events: none;
+}
+
+.timebar-cursor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: var(--accent);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.timebar-modes {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.timebar-mode-segment {
+    height: 100%;
+    opacity: 0.3;
+}
+
+.timebar-speed select {
+    padding: 2px 4px;
+    font-size: 0.8rem;
+}

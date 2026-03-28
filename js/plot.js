@@ -1,0 +1,239 @@
+/**
+ * Plot management - creates and manages Plotly charts
+ */
+const PlotManager = {
+    plotCounter: 0,
+
+    init() {
+        this.container = document.getElementById('plot-container');
+        this.categorySelect = document.getElementById('graph-category');
+        this.presetSelect = document.getElementById('graph-preset');
+        this.addBtn = document.getElementById('btn-add-graph');
+        this.clearBtn = document.getElementById('btn-clear-plots');
+
+        this.addBtn.addEventListener('click', () => this.addPresetGraph());
+        this.clearBtn.addEventListener('click', () => this.clearAll());
+
+        this.categorySelect.addEventListener('change', () => {
+            this.populatePresets(this.categorySelect.value);
+        });
+
+        EventBus.on('parse:complete', () => this.onDataLoaded());
+        EventBus.on('time:change', (t) => this.updateTimeCursor(t));
+        EventBus.on('time:update', (t) => this.updateTimeCursor(t));
+        EventBus.on('plot:add', (config) => this.addPlot(config));
+    },
+
+    onDataLoaded() {
+        this.container.innerHTML = '';
+        this.populateCategories();
+        this.showEmptyState();
+    },
+
+    showEmptyState() {
+        if (this.container.children.length > 0) return;
+        this.container.innerHTML = `
+            <div class="plot-empty">
+                <i class="fas fa-chart-area"></i>
+                <p>Select a graph preset or enter an expression to start plotting</p>
+            </div>
+        `;
+    },
+
+    populateCategories() {
+        this.categorySelect.innerHTML = '<option value="">Select Category</option>';
+        const categories = GraphDefinitions.getCategories();
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            this.categorySelect.appendChild(opt);
+        });
+    },
+
+    populatePresets(category) {
+        this.presetSelect.innerHTML = '<option value="">Select Graph</option>';
+        if (!category) return;
+
+        const presets = GraphDefinitions.getPresets(category);
+        presets.forEach(preset => {
+            const opt = document.createElement('option');
+            opt.value = preset.name;
+            opt.textContent = preset.name;
+            this.presetSelect.appendChild(opt);
+        });
+    },
+
+    addPresetGraph() {
+        const category = this.categorySelect.value;
+        const presetName = this.presetSelect.value;
+        if (!category || !presetName) return;
+
+        const preset = GraphDefinitions.getPreset(category, presetName);
+        if (!preset) return;
+
+        this.addPlot({
+            title: preset.name,
+            expressions: preset.expressions,
+            yAxes: preset.yAxes || [{ title: '' }]
+        });
+    },
+
+    addPlot(config) {
+        // Remove empty state
+        const empty = this.container.querySelector('.plot-empty');
+        if (empty) empty.remove();
+
+        const id = 'plot-' + (++this.plotCounter);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'plot-wrapper';
+        wrapper.id = id;
+
+        wrapper.innerHTML = `
+            <div class="plot-header">
+                <span class="plot-title">${config.title || 'Custom Plot'}</span>
+                <button class="plot-close" data-plot="${id}" title="Remove"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="plot-area" id="${id}-area"></div>
+        `;
+
+        this.container.appendChild(wrapper);
+
+        // Close button
+        wrapper.querySelector('.plot-close').addEventListener('click', () => {
+            wrapper.remove();
+            State.plots = State.plots.filter(p => p.id !== id);
+            if (this.container.children.length === 0) this.showEmptyState();
+        });
+
+        // Build traces
+        const traces = [];
+        const layout = this.getBaseLayout();
+
+        if (config.expressions) {
+            config.expressions.forEach((expr, i) => {
+                const trace = this.resolveExpression(expr, i);
+                if (trace) traces.push(trace);
+            });
+        }
+
+        Plotly.newPlot(id + '-area', traces, layout, {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'],
+            displaylogo: false,
+            scrollZoom: true
+        });
+
+        // Hover sync
+        const plotArea = document.getElementById(id + '-area');
+        plotArea.on('plotly_hover', (data) => {
+            if (data.points && data.points[0]) {
+                const x = data.points[0].x;
+                // x is time in seconds from start, convert to timeUS
+                if (State.timeRange) {
+                    const timeUS = State.timeRange.start + x * 1e6;
+                    EventBus.emit('time:change', timeUS);
+                }
+            }
+        });
+
+        State.plots.push({ id, config, traces });
+    },
+
+    resolveExpression(expr, colorIdx) {
+        // expr format: "MSG.Field" or "MSG[instance].Field"
+        const match = expr.match(/^(\w+)(?:\[(\d+)\])?\.(\w+)$/);
+        if (!match) return null;
+
+        const [, msgType, instance, field] = match;
+        const msgData = State.messages[msgType];
+        if (!msgData || !msgData.data) return null;
+
+        let timeData, fieldData;
+
+        if (instance !== undefined && msgData.instances && msgData.instances[instance]) {
+            const inst = msgData.instances[instance];
+            timeData = inst.TimeUS;
+            fieldData = inst[field];
+        } else {
+            timeData = msgData.data.TimeUS;
+            fieldData = msgData.data[field];
+        }
+
+        if (!timeData || !fieldData) return null;
+
+        // Convert time to seconds from start
+        const startTime = State.timeRange ? State.timeRange.start : 0;
+        const x = timeData.map(t => (t - startTime) / 1e6);
+
+        return {
+            x: x,
+            y: fieldData,
+            name: expr,
+            type: 'scattergl',
+            mode: 'lines',
+            line: {
+                color: State.colors[colorIdx % State.colors.length],
+                width: 1
+            }
+        };
+    },
+
+    getBaseLayout() {
+        return {
+            paper_bgcolor: '#1a1a2e',
+            plot_bgcolor: '#1a1a2e',
+            font: { color: '#b0b3b8', size: 11 },
+            margin: { l: 50, r: 20, t: 10, b: 30 },
+            xaxis: {
+                title: 'Time (s)',
+                gridcolor: '#2d3748',
+                zerolinecolor: '#2d3748',
+                tickfont: { size: 10 }
+            },
+            yaxis: {
+                gridcolor: '#2d3748',
+                zerolinecolor: '#2d3748',
+                tickfont: { size: 10 }
+            },
+            showlegend: true,
+            legend: {
+                orientation: 'h',
+                y: 1.12,
+                font: { size: 10 }
+            },
+            hovermode: 'x unified',
+            shapes: [] // for time cursor
+        };
+    },
+
+    updateTimeCursor: Utils.throttle(function (timeUS) {
+        if (!State.timeRange) return;
+        const timeSec = (timeUS - State.timeRange.start) / 1e6;
+
+        State.plots.forEach(plot => {
+            const plotArea = document.getElementById(plot.id + '-area');
+            if (!plotArea || !plotArea.layout) return;
+
+            Plotly.relayout(plotArea, {
+                shapes: [{
+                    type: 'line',
+                    x0: timeSec,
+                    x1: timeSec,
+                    y0: 0,
+                    y1: 1,
+                    yref: 'paper',
+                    line: { color: '#4fc3f7', width: 1, dash: 'dot' }
+                }]
+            });
+        });
+    }, 50),
+
+    clearAll() {
+        this.container.innerHTML = '';
+        State.plots = [];
+        this.plotCounter = 0;
+        this.showEmptyState();
+    }
+};
