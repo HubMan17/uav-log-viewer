@@ -130,9 +130,35 @@ const PlotManager = {
         plotArea.on('plotly_hover', (data) => {
             if (data.points && data.points[0]) {
                 const x = data.points[0].x;
-                // x is time in seconds from start, convert to timeUS
                 if (State.timeRange) {
                     const timeUS = State.timeRange.start + x * 1e6;
+                    EventBus.emit('time:change', timeUS);
+                }
+            }
+        });
+
+        // Synchronized zoom across all plots
+        plotArea.on('plotly_relayout', (eventData) => {
+            if (this._syncing) return;
+            const xRange = [];
+            if (eventData['xaxis.range[0]'] !== undefined) {
+                xRange.push(eventData['xaxis.range[0]'], eventData['xaxis.range[1]']);
+            } else if (eventData['xaxis.autorange']) {
+                // Reset to auto
+                xRange.push(null, null);
+            }
+            if (xRange.length === 2) {
+                this.syncXRange(id, xRange[0], xRange[1]);
+            }
+        });
+
+        // Click to set time
+        plotArea.on('plotly_click', (data) => {
+            if (data.points && data.points[0]) {
+                const x = data.points[0].x;
+                if (State.timeRange) {
+                    const timeUS = State.timeRange.start + x * 1e6;
+                    State.currentTime = timeUS;
                     EventBus.emit('time:change', timeUS);
                 }
             }
@@ -232,6 +258,21 @@ const PlotManager = {
             });
         });
     }, 50),
+
+    syncXRange(sourceId, x0, x1) {
+        this._syncing = true;
+        State.plots.forEach(plot => {
+            if (plot.id === sourceId) return;
+            const el = document.getElementById(plot.id + '-area');
+            if (!el) return;
+            if (x0 === null) {
+                Plotly.relayout(el, { 'xaxis.autorange': true });
+            } else {
+                Plotly.relayout(el, { 'xaxis.range': [x0, x1] });
+            }
+        });
+        this._syncing = false;
+    },
 
     clearAll() {
         this.container.innerHTML = '';

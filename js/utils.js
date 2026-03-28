@@ -147,3 +147,24 @@ window.radians = Utils.radians;
 window.kmh = Utils.kmh;
 window.altitude = Utils.altitude;
 window.sqrt = Math.sqrt;
+window.abs = Math.abs;
+window.min = Math.min;
+window.max = Math.max;
+window.pow = Math.pow;
+window.log = Math.log;
+window.log10 = Math.log10;
+window.sin = Math.sin;
+window.cos = Math.cos;
+window.tan = Math.tan;
+window.atan2 = Math.atan2;
+window.getParam = function(name, defaultVal) {
+    const val = State.params[name];
+    return val !== undefined ? val : (defaultVal !== undefined ? defaultVal : 0);
+};
+window.mag_heading = function(magX, magY, magZ, roll, pitch, yaw) {
+    const cr = Math.cos(roll), sr = Math.sin(roll);
+    const cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const headX = magX * cp + magY * sr * sp + magZ * cr * sp;
+    const headY = magY * cr - magZ * sr;
+    return Utils.degrees(Math.atan2(-headY, headX));
+};
