@@ -101,6 +101,7 @@ const PlotManager = {
 
         // Close button
         wrapper.querySelector('.plot-close').addEventListener('click', () => {
+            Plotly.purge(id + '-area');
             wrapper.remove();
             State.plots = State.plots.filter(p => p.id !== id);
             if (this.container.children.length === 0) this.showEmptyState();
@@ -108,7 +109,6 @@ const PlotManager = {
 
         // Build traces
         const traces = [];
-        const layout = this.getBaseLayout();
 
         if (config.expressions) {
             config.expressions.forEach((expr, i) => {
@@ -127,42 +127,53 @@ const PlotManager = {
 
         console.log('Plotting', traces.length, 'traces for', config.title);
 
-        try {
-            Plotly.newPlot(id + '-area', traces, layout, {
-                responsive: true,
-                displayModeBar: true,
-                modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'],
-                displaylogo: false,
-                scrollZoom: true
-            });
-        } catch (e) {
-            console.error('Plotly.newPlot failed:', e);
-            const area = document.getElementById(id + '-area');
-            area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--error);">Plot error: ' + e.message + '</div>';
-            State.plots.push({ id, config, traces });
-            return;
-        }
+        State.plots.push({ id, config, traces });
 
-        // Hover sync
-        const plotArea = document.getElementById(id + '-area');
+        // Defer Plotly creation to next frame so DOM has computed dimensions
+        requestAnimationFrame(() => {
+            const plotArea = document.getElementById(id + '-area');
+            if (!plotArea) return;
+
+            // Force explicit dimensions for Plotly
+            const rect = plotArea.getBoundingClientRect();
+            const layout = this.getBaseLayout();
+            layout.width = Math.max(rect.width, 300);
+            layout.height = Math.max(rect.height, 200);
+
+            try {
+                Plotly.newPlot(plotArea, traces, layout, {
+                    responsive: true,
+                    displayModeBar: true,
+                    modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'],
+                    displaylogo: false,
+                    scrollZoom: true
+                });
+            } catch (e) {
+                console.error('Plotly.newPlot failed:', e);
+                plotArea.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--error);">Plot error: ' + e.message + '</div>';
+                return;
+            }
+
+            this._bindPlotEvents(plotArea, id);
+        });
+    },
+
+    _bindPlotEvents(plotArea, id) {
         plotArea.on('plotly_hover', (data) => {
             if (data.points && data.points[0]) {
                 const x = data.points[0].x;
                 if (State.timeRange) {
-                    const timeUS = State.timeRange.start + x * 1e6;
-                    EventBus.emit('time:change', timeUS);
+                    EventBus.emit('time:change', State.timeRange.start + x * 1e6);
                 }
             }
         });
 
-        // Synchronized zoom across all plots
         plotArea.on('plotly_relayout', (eventData) => {
             if (this._syncing) return;
             const xRange = [];
             if (eventData['xaxis.range[0]'] !== undefined) {
                 xRange.push(eventData['xaxis.range[0]'], eventData['xaxis.range[1]']);
             } else if (eventData['xaxis.autorange']) {
-                // Reset to auto
                 xRange.push(null, null);
             }
             if (xRange.length === 2) {
@@ -170,19 +181,15 @@ const PlotManager = {
             }
         });
 
-        // Click to set time
         plotArea.on('plotly_click', (data) => {
             if (data.points && data.points[0]) {
                 const x = data.points[0].x;
                 if (State.timeRange) {
-                    const timeUS = State.timeRange.start + x * 1e6;
-                    State.currentTime = timeUS;
-                    EventBus.emit('time:change', timeUS);
+                    State.currentTime = State.timeRange.start + x * 1e6;
+                    EventBus.emit('time:change', State.currentTime);
                 }
             }
         });
-
-        State.plots.push({ id, config, traces });
     },
 
     resolveExpression(expr, colorIdx) {
