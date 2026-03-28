@@ -86,13 +86,71 @@ const Upload = {
             const buffer = e.target.result;
             this.updateProgress(10, 'Parsing log file...');
 
-            if (State.logType === 'dataflash') {
+            // Try Worker first, fall back to main thread parsing
+            try {
                 this.startWorkerParse(buffer, file.name);
-            } else if (State.logType === 'mavlink') {
-                this.startWorkerParse(buffer, file.name);
+            } catch (err) {
+                console.warn('Worker unavailable, parsing on main thread:', err.message);
+                this.parseOnMainThread(buffer, file.name);
             }
         };
         reader.readAsArrayBuffer(file);
+    },
+
+    /**
+     * Detect the actual log type from buffer contents.
+     */
+    detectLogType(buffer, filename) {
+        const ext = (filename.split('.').pop() || '').toLowerCase();
+        if (ext === 'tlog') return 'mavlink';
+
+        if (buffer.byteLength >= 2) {
+            const header = new Uint8Array(buffer, 0, 2);
+            if (header[0] === 0xA3 && header[1] === 0x95) return 'dataflash';
+            if (header[0] === 0xFE || header[0] === 0xFD) return 'mavlink';
+        }
+
+        // .log could be text format
+        if (ext === 'log' && buffer.byteLength >= 3) {
+            const header = new Uint8Array(buffer, 0, 3);
+            if (header[0] >= 0x20 && header[0] <= 0x7E) return 'dataflash-text';
+            return 'dataflash';
+        }
+
+        if (ext === 'bin') return 'dataflash';
+        return 'dataflash';
+    },
+
+    /**
+     * Main-thread fallback parser — used when Workers are blocked (file:// protocol).
+     */
+    parseOnMainThread(buffer, filename) {
+        const logType = this.detectLogType(buffer, filename);
+        this.updateProgress(15, 'Parsing on main thread...');
+
+        // Use setTimeout to let the UI update before blocking
+        setTimeout(() => {
+            try {
+                let parser;
+                const onProgress = (pct, status) => {
+                    // Can't update UI during sync parsing, but store for later
+                };
+
+                if (logType === 'mavlink') {
+                    parser = new MavlinkParser(buffer, { onProgress });
+                } else if (logType === 'dataflash-text') {
+                    parser = new DataFlashTextParser(buffer, { onProgress });
+                } else {
+                    parser = new DataFlashParser(buffer, { onProgress });
+                }
+
+                const result = parser.parse();
+                this.handleResult(result);
+            } catch (err) {
+                this.updateProgress(-1, 'Parse error: ' + err.message);
+                console.error('Parse error:', err);
+            }
+        }, 50);
     },
 
     startWorkerParse(buffer, filename) {
@@ -108,108 +166,7 @@ const Upload = {
                     break;
 
                 case 'result': {
-                    const result = msg.data;
-                    this.updateProgress(95, 'Finalizing...');
-
-                    // Store formats
-                    State.formats = result.formatsByName || {};
-                    State.units = result.fmtUnits || {};
-
-                    // Store messages in the format our app expects
-                    // Parser gives: { name: { fields: {label: [...]}, count: N } }
-                    for (const [name, msgData] of Object.entries(result.messages || {})) {
-                        State.messages[name] = {
-                            data: msgData.fields || {},
-                            count: msgData.count || 0
-                        };
-                    }
-
-                    // Flight modes
-                    State.flightModeChanges = (result.modes || []).map(m => ({
-                        timeUS: m.timeUS,
-                        mode: m.mode !== undefined ? m.mode : m.modeNum,
-                        modeNum: m.modeNum !== undefined ? m.modeNum : m.mode,
-                        name: m.name || ''
-                    }));
-
-                    // Text messages
-                    State.textMessages = (result.textMessages || []).map(m => ({
-                        timeUS: m.timeUS,
-                        text: m.text || m.message || '',
-                        severity: m.severity
-                    }));
-
-                    // Mission
-                    State.mission = (result.missions || []).map(m => ({
-                        lat: m.lat || m.Lat,
-                        lng: m.lng || m.Lng,
-                        alt: m.alt || m.Alt,
-                        seq: m.seq || m.CNum,
-                        command: m.command || m.CId
-                    }));
-
-                    // Parameters
-                    State.params = result.parameters || {};
-
-                    // Events
-                    State.events = result.events || [];
-
-                    // Trajectories - convert from flat array to grouped format
-                    const rawTrajectories = result.trajectories || [];
-                    if (Array.isArray(rawTrajectories)) {
-                        // Group by source
-                        const grouped = {};
-                        for (const point of rawTrajectories) {
-                            const src = point.source || 'GPS';
-                            if (!grouped[src]) {
-                                grouped[src] = { lat: [], lng: [], alt: [], time: [] };
-                            }
-                            grouped[src].lat.push(point.lat);
-                            grouped[src].lng.push(point.lng);
-                            grouped[src].alt.push(point.alt || 0);
-                            grouped[src].time.push(point.timeUS || 0);
-                        }
-                        State.trajectories = grouped;
-                    } else {
-                        State.trajectories = rawTrajectories;
-                    }
-                    State.trajectorySources = Object.keys(State.trajectories);
-                    if (State.trajectorySources.length > 0) {
-                        State.trajectorySource = State.trajectorySources[0];
-                        State.mapAvailable = true;
-                    }
-
-                    // Attitudes - convert from flat array to structured format
-                    const rawAttitudes = result.attitudes || [];
-                    if (Array.isArray(rawAttitudes) && rawAttitudes.length > 0) {
-                        State.timeAttitude = {
-                            time: rawAttitudes.map(a => a.timeUS),
-                            roll: rawAttitudes.map(a => a.roll),
-                            pitch: rawAttitudes.map(a => a.pitch),
-                            yaw: rawAttitudes.map(a => a.yaw)
-                        };
-                    } else {
-                        State.timeAttitude = rawAttitudes;
-                    }
-
-                    // Compute message types and time range
-                    State.messageTypes = Object.keys(State.messages).sort();
-                    this.computeTimeRange();
-
-                    // Process flight modes with vehicle type detection
-                    const vehicleType = result.vehicleType ||
-                        FlightModes.detectVehicleType(State.params, State.formats);
-                    State.flightModeChanges = FlightModes.processFlightModes(
-                        State.flightModeChanges, vehicleType
-                    );
-
-                    State.processDone = true;
-                    this.updateProgress(100, 'Done!');
-
-                    setTimeout(() => {
-                        EventBus.emit('parse:complete');
-                    }, 200);
-
+                    this.handleResult(msg.data);
                     worker.terminate();
                     break;
                 }
@@ -227,6 +184,107 @@ const Upload = {
             filename: filename,
             logType: State.logType
         }, [buffer]);
+    },
+
+    handleResult(result) {
+        this.updateProgress(95, 'Finalizing...');
+
+        // Store formats
+        State.formats = result.formatsByName || {};
+        State.units = result.fmtUnits || {};
+
+        // Store messages in the format our app expects
+        for (const [name, msgData] of Object.entries(result.messages || {})) {
+            State.messages[name] = {
+                data: msgData.fields || {},
+                count: msgData.count || 0
+            };
+        }
+
+        // Flight modes
+        State.flightModeChanges = (result.modes || []).map(m => ({
+            timeUS: m.timeUS,
+            mode: m.mode !== undefined ? m.mode : m.modeNum,
+            modeNum: m.modeNum !== undefined ? m.modeNum : m.mode,
+            name: m.name || ''
+        }));
+
+        // Text messages
+        State.textMessages = (result.textMessages || []).map(m => ({
+            timeUS: m.timeUS,
+            text: m.text || m.message || '',
+            severity: m.severity
+        }));
+
+        // Mission
+        State.mission = (result.missions || []).map(m => ({
+            lat: m.lat || m.Lat,
+            lng: m.lng || m.Lng,
+            alt: m.alt || m.Alt,
+            seq: m.seq || m.CNum,
+            command: m.command || m.CId
+        }));
+
+        // Parameters
+        State.params = result.parameters || {};
+
+        // Events
+        State.events = result.events || [];
+
+        // Trajectories - convert from flat array to grouped format
+        const rawTrajectories = result.trajectories || [];
+        if (Array.isArray(rawTrajectories)) {
+            const grouped = {};
+            for (const point of rawTrajectories) {
+                const src = point.source || 'GPS';
+                if (!grouped[src]) {
+                    grouped[src] = { lat: [], lng: [], alt: [], time: [] };
+                }
+                grouped[src].lat.push(point.lat);
+                grouped[src].lng.push(point.lng);
+                grouped[src].alt.push(point.alt || 0);
+                grouped[src].time.push(point.timeUS || 0);
+            }
+            State.trajectories = grouped;
+        } else {
+            State.trajectories = rawTrajectories;
+        }
+        State.trajectorySources = Object.keys(State.trajectories);
+        if (State.trajectorySources.length > 0) {
+            State.trajectorySource = State.trajectorySources[0];
+            State.mapAvailable = true;
+        }
+
+        // Attitudes - convert from flat array to structured format
+        const rawAttitudes = result.attitudes || [];
+        if (Array.isArray(rawAttitudes) && rawAttitudes.length > 0) {
+            State.timeAttitude = {
+                time: rawAttitudes.map(a => a.timeUS),
+                roll: rawAttitudes.map(a => a.roll),
+                pitch: rawAttitudes.map(a => a.pitch),
+                yaw: rawAttitudes.map(a => a.yaw)
+            };
+        } else {
+            State.timeAttitude = rawAttitudes;
+        }
+
+        // Compute message types and time range
+        State.messageTypes = Object.keys(State.messages).sort();
+        this.computeTimeRange();
+
+        // Process flight modes with vehicle type detection
+        const vehicleType = result.vehicleType ||
+            FlightModes.detectVehicleType(State.params, State.formats);
+        State.flightModeChanges = FlightModes.processFlightModes(
+            State.flightModeChanges, vehicleType
+        );
+
+        State.processDone = true;
+        this.updateProgress(100, 'Done!');
+
+        setTimeout(() => {
+            EventBus.emit('parse:complete');
+        }, 200);
     },
 
     computeTimeRange() {
