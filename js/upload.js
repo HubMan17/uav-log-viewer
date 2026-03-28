@@ -154,16 +154,43 @@ const Upload = {
                     // Events
                     State.events = result.events || [];
 
-                    // Trajectories
-                    State.trajectories = result.trajectories || {};
+                    // Trajectories - convert from flat array to grouped format
+                    const rawTrajectories = result.trajectories || [];
+                    if (Array.isArray(rawTrajectories)) {
+                        // Group by source
+                        const grouped = {};
+                        for (const point of rawTrajectories) {
+                            const src = point.source || 'GPS';
+                            if (!grouped[src]) {
+                                grouped[src] = { lat: [], lng: [], alt: [], time: [] };
+                            }
+                            grouped[src].lat.push(point.lat);
+                            grouped[src].lng.push(point.lng);
+                            grouped[src].alt.push(point.alt || 0);
+                            grouped[src].time.push(point.timeUS || 0);
+                        }
+                        State.trajectories = grouped;
+                    } else {
+                        State.trajectories = rawTrajectories;
+                    }
                     State.trajectorySources = Object.keys(State.trajectories);
                     if (State.trajectorySources.length > 0) {
                         State.trajectorySource = State.trajectorySources[0];
                         State.mapAvailable = true;
                     }
 
-                    // Attitudes
-                    State.timeAttitude = result.attitudes || {};
+                    // Attitudes - convert from flat array to structured format
+                    const rawAttitudes = result.attitudes || [];
+                    if (Array.isArray(rawAttitudes) && rawAttitudes.length > 0) {
+                        State.timeAttitude = {
+                            time: rawAttitudes.map(a => a.timeUS),
+                            roll: rawAttitudes.map(a => a.roll),
+                            pitch: rawAttitudes.map(a => a.pitch),
+                            yaw: rawAttitudes.map(a => a.yaw)
+                        };
+                    } else {
+                        State.timeAttitude = rawAttitudes;
+                    }
 
                     // Compute message types and time range
                     State.messageTypes = Object.keys(State.messages).sort();
