@@ -199,23 +199,25 @@
                             <select id="graph-preset" class="toolbar-select">
                                 <option value="">Select Graph</option>
                             </select>
-                            <button class="toolbar-btn" id="btn-add-graph" title="Add Graph">
+                            <button class="toolbar-btn btn-accent" id="btn-add-graph" title="Add to current plot">
                                 <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="toolbar-btn" id="btn-new-graph" title="Add as new separate plot">
+                                <i class="fas fa-plus-square"></i>
                             </button>
                         </div>
                         <div class="expression-input-wrapper">
                             <input type="text" id="expression-input" class="expression-input" placeholder="Expression: e.g. ATT.Roll ATT.Pitch">
                             <div class="suggestions-box" id="suggestions-box"></div>
-                            <button class="toolbar-btn" id="btn-add-expression" title="Plot Expression">
-                                <i class="fas fa-chart-line"></i>
+                            <button class="toolbar-btn btn-accent" id="btn-add-expression" title="Add to current plot">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="toolbar-btn" id="btn-new-expression" title="Add as new separate plot">
+                                <i class="fas fa-plus-square"></i>
                             </button>
                         </div>
                     </div>
                     <div class="toolbar-right">
-                        <label class="toolbar-toggle" title="Add to last plot instead of creating new">
-                            <input type="checkbox" id="toggle-merge-plot">
-                            <span class="toolbar-toggle-label">Merge</span>
-                        </label>
                         <button class="toolbar-btn" id="btn-msg-browser" title="Browse Message Types">
                             <i class="fas fa-database"></i>
                         </button>

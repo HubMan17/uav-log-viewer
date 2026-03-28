@@ -8,10 +8,13 @@ const PlotManager = {
         this.container = document.getElementById('plot-container');
         this.categorySelect = document.getElementById('graph-category');
         this.presetSelect = document.getElementById('graph-preset');
-        this.addBtn = document.getElementById('btn-add-graph');
         this.clearBtn = document.getElementById('btn-clear-plots');
 
-        this.addBtn.addEventListener('click', () => this.addPresetGraph());
+        // "+" = merge into current plot (or create first)
+        document.getElementById('btn-add-graph').addEventListener('click', () => this.addPresetGraph(true));
+        // "new" = always create separate plot
+        document.getElementById('btn-new-graph').addEventListener('click', () => this.addPresetGraph(false));
+
         this.clearBtn.addEventListener('click', () => this.clearAll());
 
         this.categorySelect.addEventListener('change', () => {
@@ -64,7 +67,7 @@ const PlotManager = {
         });
     },
 
-    addPresetGraph() {
+    addPresetGraph(merge) {
         const category = this.categorySelect.value;
         const presetName = this.presetSelect.value;
         if (!category || !presetName) return;
@@ -72,19 +75,12 @@ const PlotManager = {
         const preset = GraphDefinitions.getPreset(category, presetName);
         if (!preset) return;
 
-        const mergeCheck = document.getElementById('toggle-merge-plot');
-        const shouldMerge = mergeCheck && mergeCheck.checked;
+        const config = { title: preset.name, expressions: preset.expressions };
 
-        if (shouldMerge && State.plots.length > 0) {
-            this.mergeIntoLastPlot({
-                title: preset.name,
-                expressions: preset.expressions
-            });
+        if (merge && State.plots.length > 0) {
+            this.mergeIntoLastPlot(config);
         } else {
-            this.addPlot({
-                title: preset.name,
-                expressions: preset.expressions,
-            });
+            this.addPlot(config);
         }
     },
 

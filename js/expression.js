@@ -14,7 +14,8 @@ const ExpressionEditor = {
             setTimeout(() => this.hideSuggestions(), 200);
         });
 
-        this.addBtn.addEventListener('click', () => this.submit());
+        this.addBtn.addEventListener('click', () => this.submit(true));
+        document.getElementById('btn-new-expression').addEventListener('click', () => this.submit(false));
     },
 
     onInput() {
@@ -124,7 +125,7 @@ const ExpressionEditor = {
                     this.applySuggestion(items[this.selectedIdx].textContent);
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
-                    this.submit();
+                    this.submit(e.shiftKey ? false : true);
                 }
                 break;
             case 'Escape':
@@ -142,24 +143,17 @@ const ExpressionEditor = {
         }
     },
 
-    submit() {
+    submit(merge) {
         const value = this.input.value.trim();
         if (!value) return;
 
         const expressions = value.split(/\s+/).filter(Boolean);
-        const mergeCheck = document.getElementById('toggle-merge-plot');
-        const shouldMerge = mergeCheck && mergeCheck.checked;
+        const config = { title: value, expressions };
 
-        if (shouldMerge && State.plots.length > 0) {
-            PlotManager.mergeIntoLastPlot({
-                title: value,
-                expressions: expressions
-            });
+        if (merge && State.plots.length > 0) {
+            PlotManager.mergeIntoLastPlot(config);
         } else {
-            PlotManager.addPlot({
-                title: value,
-                expressions: expressions
-            });
+            PlotManager.addPlot(config);
         }
 
         this.input.value = '';
