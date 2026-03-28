@@ -154,3 +154,200 @@
     width: calc(100% - 24px);
     padding: 6px 10px;
 }
+
+/* ===== Device IDs Panel ===== */
+.devid-card {
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.devid-header {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--accent);
+    font-family: monospace;
+}
+
+.devid-table {
+    width: 100%;
+    font-size: 0.78rem;
+    border-collapse: collapse;
+}
+
+.devid-table td {
+    padding: 3px 10px;
+    border-top: 1px solid var(--border);
+}
+
+.devid-table td:first-child {
+    color: var(--text-muted);
+    width: 70px;
+}
+
+.devid-table td:last-child {
+    color: var(--text-primary);
+    font-family: monospace;
+}
+
+/* ===== EKF Helper Panel ===== */
+.ekf-source-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.ekf-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.ekf-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ekf-green { background: #4caf50; box-shadow: 0 0 4px rgba(76, 175, 80, 0.5); }
+.ekf-yellow { background: #ff9800; box-shadow: 0 0 4px rgba(255, 152, 0, 0.5); }
+.ekf-red { background: #f44336; box-shadow: 0 0 4px rgba(244, 67, 54, 0.5); }
+
+.ekf-label {
+    flex: 1;
+    color: var(--text-secondary);
+}
+
+.ekf-values {
+    font-family: monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.ekf-flags-section {
+    margin-top: 12px;
+}
+
+.ekf-flags-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.ekf-flag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 0.78rem;
+}
+
+.ekf-flag-label {
+    color: var(--text-secondary);
+}
+
+/* ===== Attitude Panel ===== */
+.attitude-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+}
+
+#attitude-canvas {
+    border-radius: 8px;
+    background: #1a1a2e;
+}
+
+.attitude-readout {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    font-family: monospace;
+    color: var(--text-primary);
+}
+
+.att-label {
+    color: var(--text-muted);
+}
+
+/* ===== MagFit Panel ===== */
+.magfit-section {
+    margin-bottom: 14px;
+}
+
+.magfit-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.magfit-offset-row {
+    margin-bottom: 8px;
+}
+
+.magfit-offset-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 3px;
+}
+
+.magfit-offset-table,
+.magfit-stats-table {
+    width: 100%;
+    font-size: 0.78rem;
+    border-collapse: collapse;
+    margin-bottom: 6px;
+}
+
+.magfit-offset-table td,
+.magfit-stats-table td,
+.magfit-stats-table th {
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+}
+
+.magfit-offset-table td:first-child {
+    color: var(--text-muted);
+    width: 30px;
+}
+
+.magfit-stats-header th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.magfit-stats-table td {
+    font-family: monospace;
+    color: var(--text-primary);
+}
+
+.magfit-stats-table td:first-child {
+    color: var(--text-muted);
+    font-family: inherit;
+}
+
+.magfit-mag-block {
+    margin-bottom: 10px;
+}
