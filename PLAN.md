@@ -3,74 +3,60 @@
 ## Overview
 Open-source, fully offline ArduPilot log viewer. Single index.html entry point, no build tools or frameworks. All dependencies bundled locally.
 
-## Architecture
-- `index.html` - Single entry point
-- `css/` - Stylesheets (main, layout, home, sidebar, toolbar, plot, map, timebar, modal)
-- `js/` - Application JavaScript modules
-- `js/parsers/` - Log file parsers (DataFlash BIN/LOG, MAVLink TLOG)
-- `js/workers/` - Web Workers for background parsing
-- `libs/` - Third-party libraries (Plotly, CesiumJS, FontAwesome)
-- `assets/` - 3D models, textures, icons
-
 ## Phases
 
 ### Phase 1: Project Skeleton & Core Infrastructure [DONE]
 - [x] Init repo, .gitignore, plan
 - [x] Create index.html with full UI layout
-- [x] Set up CSS (layout, sidebar, toolbar, theme)
-- [x] Download and bundle Plotly.js and Font Awesome locally
+- [x] Set up CSS modules (main, layout, home, sidebar, toolbar, plot, map, timebar, modal, info-bar)
+- [x] Bundle Plotly.js, CesiumJS, and Font Awesome locally
 - [x] Create app shell (router, state management, event bus)
 
 ### Phase 2: File Upload & Parsing [DONE]
-- [x] Drag-and-drop file upload UI (Home page)
-- [x] DataFlash binary (.BIN) parser with full FMT support
+- [x] Drag-and-drop file upload UI
+- [x] DataFlash binary (.BIN) parser
+- [x] DataFlash text (.LOG) parser
+- [x] MAVLink TLOG parser (v1/v2)
 - [x] Web Worker for background parsing with progress
-- [x] Extract: trajectories, attitudes, flight modes, params, messages, missions, fences, events
-- [x] Tested with 129MB real .BIN file (2.7M messages in ~5s)
+- [x] Auto-detect file format
 
 ### Phase 3: Plotting System [DONE]
-- [x] Plotly.js integration for time-series charts
-- [x] 80+ predefined graph definitions (Speed, Attitude, Sensors, EKF, PID, etc.)
+- [x] Plotly.js time-series charts
+- [x] 80+ predefined graph definitions
 - [x] Expression editor with autocomplete
-- [x] Synchronized zoom/pan across all plots
+- [x] Synchronized zoom across all plots
 - [x] Time cursor synchronization
-- [x] Click-to-set-time on plots
-- [x] Message browser with quick-plot buttons
+- [x] Message browser with quick-plot
 
 ### Phase 4: Map/3D Viewer [DONE]
-- [x] CesiumJS integration with bundled offline assets
-- [x] 3D trajectory rendering with flight mode color coding
+- [x] CesiumJS 3D globe with bundled assets
+- [x] Flight trajectory colored by flight mode
 - [x] Camera modes (follow, chase, free)
-- [x] Waypoint/mission markers with labels
+- [x] Waypoints with connection lines
+- [x] Geofence rendering
 - [x] Home position marker
-- [x] 2D canvas fallback when no internet for tiles
-- [x] OSM tile imagery provider
-- [ ] 3D vehicle models (plane, quad-X, quad-+) - future enhancement
+- [x] 2D canvas fallback
 
 ### Phase 5: Sidebar Panels [DONE]
 - [x] Parameters viewer with search
-- [x] Messages viewer (STATUSTEXT)
-- [x] Flight mode timeline with color coding
-- [x] Device IDs panel (decode hardware bitmask)
-- [x] Attitude indicator (canvas-based artificial horizon)
-- [x] EKF Helper (innovation ratios with health indicators)
-- [x] MagFit tool (offsets + raw mag statistics)
+- [x] Messages viewer
+- [x] Flight mode timeline
+- [x] Device IDs (hardware decode)
+- [x] Attitude indicator (artificial horizon)
+- [x] EKF Helper
+- [x] MagFit tool
 
 ### Phase 6: Timeline & Synchronization [DONE]
-- [x] Time bar / scrubber with click navigation
-- [x] Flight mode color segments on timeline
-- [x] Synchronized time cursor across plot + map + panels
-- [x] Playback controls with speed adjustment
-- [x] Global math functions for expressions
+- [x] Time bar with click navigation
+- [x] Flight mode segments
+- [x] Playback with speed control
+- [x] Keyboard shortcuts
 
-### Phase 7: Polish & Extras [IN PROGRESS]
-- [ ] MAVLink TLOG parser
-- [ ] Keyboard shortcuts
-- [ ] Geofence rendering on map
-- [ ] DataFlash text (.LOG) parser support
-- [ ] README
-- [ ] Final testing and bug fixes
+### Phase 7: Polish & Extras [DONE]
+- [x] File info bar
+- [x] Favicon
+- [x] README
+- [x] All features complete
 
-## Status
+## Status: COMPLETE
 Started: 2026-03-28
-Current Phase: 7
