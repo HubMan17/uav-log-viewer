@@ -9,7 +9,13 @@ const App = {
         TimeBar.init();
         PlotManager.init();
         ExpressionEditor.init();
+        MessageBrowser.init();
         MapViewer.init();
+
+        // Message browser button
+        document.getElementById('btn-msg-browser')?.addEventListener('click', () => {
+            MessageBrowser.show();
+        });
 
         // Handle window resize
         window.addEventListener('resize', Utils.debounce(() => {
