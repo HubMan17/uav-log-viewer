@@ -40,7 +40,10 @@ const MapViewer = {
         }
         document.getElementById('map-overlay').style.display = 'none';
 
-        if (typeof Cesium !== 'undefined') {
+        // Cesium cannot work from file:// due to cross-origin texture restrictions
+        const isFileProtocol = window.location.protocol === 'file:';
+
+        if (!isFileProtocol && typeof Cesium !== 'undefined' && !this.cesiumFailed) {
             this.initCesium();
         } else {
             this.initFallbackMap();
@@ -54,7 +57,7 @@ const MapViewer = {
 
         if (!this.initialized) {
             try {
-                // Use OpenStreetMap tiles (works offline if cached, online otherwise)
+                // Use OpenStreetMap tiles
                 const osmProvider = new Cesium.OpenStreetMapImageryProvider({
                     url: 'https://a.tile.openstreetmap.org/'
                 });
@@ -79,9 +82,20 @@ const MapViewer = {
                 // Suppress Cesium ion warning
                 this.viewer.cesiumWidget.creditContainer.style.display = 'none';
 
+                // Listen for render errors and fall back to 2D
+                this.viewer.scene.renderError.addEventListener((scene, error) => {
+                    console.warn('Cesium render error, falling back to 2D map:', error);
+                    this.cesiumFailed = true;
+                    try { this.viewer.destroy(); } catch (e) { /* ignore */ }
+                    this.viewer = null;
+                    this.initialized = false;
+                    this.initFallbackMap();
+                });
+
                 this.initialized = true;
             } catch (e) {
                 console.warn('CesiumJS init failed:', e);
+                this.cesiumFailed = true;
                 this.initFallbackMap();
                 return;
             }
@@ -149,6 +163,17 @@ const MapViewer = {
         const toX = lon => padding + (lon - minLon) * scale;
         const toY = lat => h - padding - (lat - minLat) * scale;
 
+        // Center the trajectory within the available space
+        const trajW = (maxLon - minLon) * scale;
+        const trajH = (maxLat - minLat) * scale;
+        const offsetX = (w - 2 * padding - trajW) / 2;
+        const offsetY = (h - 2 * padding - trajH) / 2;
+        const toXCentered = lon => padding + offsetX + (lon - minLon) * scale;
+        const toYCentered = lat => h - padding - offsetY - (lat - minLat) * scale;
+        // Override for rest of function
+        const toXFn = toXCentered;
+        const toYFn = toYCentered;
+
         // Draw grid
         ctx.strokeStyle = '#2d3748';
         ctx.lineWidth = 0.5;
@@ -159,6 +184,17 @@ const MapViewer = {
             ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(w - padding, y); ctx.stroke();
         }
 
+        // Coordinate labels
+        ctx.fillStyle = '#8a8d91';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(minLat.toFixed(5) + '°', padding, h - padding + 14);
+        ctx.fillText(maxLat.toFixed(5) + '°', padding, padding - 6);
+        ctx.textAlign = 'left';
+        ctx.fillText(minLon.toFixed(5) + '°', padding, h - padding + 14);
+        ctx.textAlign = 'right';
+        ctx.fillText(maxLon.toFixed(5) + '°', w - padding, h - padding + 14);
+
         // Draw trajectory with flight mode colors
         if (State.flightModeChanges.length > 0 && traj.time) {
             let modeIdx = 0;
@@ -168,15 +204,14 @@ const MapViewer = {
             for (let i = 0; i < traj.lat.length; i++) {
                 if (traj.lat[i] === 0 && traj.lng[i] === 0) continue;
 
-                // Find current mode
                 while (modeIdx < State.flightModeChanges.length - 1 &&
                        traj.time[i] >= State.flightModeChanges[modeIdx + 1].timeUS) {
                     modeIdx++;
                 }
 
                 const color = State.flightModeChanges[modeIdx]?.color || '#4fc3f7';
-                const x = toX(traj.lng[i]);
-                const y = toY(traj.lat[i]);
+                const x = toXFn(traj.lng[i]);
+                const y = toYFn(traj.lat[i]);
 
                 if (i === 0) {
                     ctx.strokeStyle = color;
@@ -194,15 +229,14 @@ const MapViewer = {
             }
             ctx.stroke();
         } else {
-            // Simple trajectory
             ctx.strokeStyle = '#4fc3f7';
             ctx.lineWidth = 2;
             ctx.beginPath();
             let started = false;
             for (let i = 0; i < traj.lat.length; i++) {
                 if (traj.lat[i] === 0 && traj.lng[i] === 0) continue;
-                const x = toX(traj.lng[i]);
-                const y = toY(traj.lat[i]);
+                const x = toXFn(traj.lng[i]);
+                const y = toYFn(traj.lat[i]);
                 if (!started) { ctx.moveTo(x, y); started = true; }
                 else ctx.lineTo(x, y);
             }
@@ -213,24 +247,72 @@ const MapViewer = {
         if (traj.lat.length > 0 && !(traj.lat[0] === 0 && traj.lng[0] === 0)) {
             ctx.fillStyle = '#4caf50';
             ctx.beginPath();
-            ctx.arc(toX(traj.lng[0]), toY(traj.lat[0]), 5, 0, Math.PI * 2);
+            ctx.arc(toXFn(traj.lng[0]), toYFn(traj.lat[0]), 6, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('H', toXFn(traj.lng[0]), toYFn(traj.lat[0]) - 10);
         }
 
-        // Draw waypoints
+        // Draw waypoints with numbers and connecting lines
         if (State.showWaypoints && State.mission.length > 0) {
-            ctx.fillStyle = '#ff9800';
-            State.mission.forEach(wp => {
-                if (wp.lat && wp.lng) {
-                    ctx.beginPath();
-                    ctx.arc(toX(wp.lng), toY(wp.lat), 4, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+            const wps = State.mission.filter(wp => wp.lat && wp.lng);
+
+            // Connecting line
+            if (wps.length > 1) {
+                ctx.strokeStyle = 'rgba(255, 152, 0, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                wps.forEach((wp, i) => {
+                    const x = toXFn(wp.lng), y = toYFn(wp.lat);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Waypoint dots and numbers
+            wps.forEach((wp, i) => {
+                const x = toXFn(wp.lng), y = toYFn(wp.lat);
+                ctx.fillStyle = '#ff9800';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = '9px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(String(i + 1), x, y - 7);
             });
         }
 
+        // Draw fences
+        if (State.showFences) {
+            const fnce = State.messages['FNCE'];
+            if (fnce && fnce.data && fnce.data.Lat && fnce.data.Lat.length > 2) {
+                ctx.strokeStyle = '#ff5252';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                for (let i = 0; i < fnce.data.Lat.length; i++) {
+                    if (fnce.data.Lat[i] === 0 && fnce.data.Lng[i] === 0) continue;
+                    const x = toXFn(fnce.data.Lng[i]), y = toYFn(fnce.data.Lat[i]);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
         // Store mapping for vehicle position updates
-        this._mapTransform = { toX, toY, w, h, minLat, maxLat, minLon, maxLon };
+        this._mapTransform = { toX: toXFn, toY: toYFn, w, h, minLat, maxLat, minLon, maxLon };
     },
 
     drawTrajectory() {
