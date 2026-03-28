@@ -5,7 +5,7 @@ Open-source, fully offline ArduPilot log viewer. Single index.html entry point, 
 
 ## Architecture
 - `index.html` - Single entry point
-- `css/` - Stylesheets
+- `css/` - Stylesheets (main, layout, home, sidebar, toolbar, plot, map, timebar, modal)
 - `js/` - Application JavaScript modules
 - `js/parsers/` - Log file parsers (DataFlash BIN/LOG, MAVLink TLOG)
 - `js/workers/` - Web Workers for background parsing
@@ -14,61 +14,63 @@ Open-source, fully offline ArduPilot log viewer. Single index.html entry point, 
 
 ## Phases
 
-### Phase 1: Project Skeleton & Core Infrastructure [IN PROGRESS]
+### Phase 1: Project Skeleton & Core Infrastructure [DONE]
 - [x] Init repo, .gitignore, plan
-- [ ] Create index.html with basic structure
-- [ ] Set up CSS (layout, sidebar, toolbar, theme)
-- [ ] Download and bundle Plotly.js locally
-- [ ] Create app shell (router, state management, event bus)
+- [x] Create index.html with full UI layout
+- [x] Set up CSS (layout, sidebar, toolbar, theme)
+- [x] Download and bundle Plotly.js and Font Awesome locally
+- [x] Create app shell (router, state management, event bus)
 
-### Phase 2: File Upload & Parsing
-- [ ] Drag-and-drop file upload UI (Home page)
-- [ ] DataFlash binary (.BIN) parser (FMT, message extraction)
-- [ ] DataFlash text (.LOG) parser
-- [ ] Web Worker for background parsing with progress
-- [ ] Extract: trajectories, attitudes, flight modes, params, messages, missions, fences, events
+### Phase 2: File Upload & Parsing [DONE]
+- [x] Drag-and-drop file upload UI (Home page)
+- [x] DataFlash binary (.BIN) parser with full FMT support
+- [x] Web Worker for background parsing with progress
+- [x] Extract: trajectories, attitudes, flight modes, params, messages, missions, fences, events
+- [x] Tested with 129MB real .BIN file (2.7M messages in ~5s)
 
-### Phase 3: Plotting System
-- [ ] Plotly.js integration for time-series charts
-- [ ] Predefined graph definitions (~80+ graphs: Speed, Attitude, Sensors, EKF, PID, etc.)
-- [ ] Expression editor with autocomplete
-- [ ] Multiple Y-axes support
-- [ ] Time synchronization with cursor/crosshair
-- [ ] Plot caching
+### Phase 3: Plotting System [DONE]
+- [x] Plotly.js integration for time-series charts
+- [x] 80+ predefined graph definitions (Speed, Attitude, Sensors, EKF, PID, etc.)
+- [x] Expression editor with autocomplete
+- [x] Synchronized zoom/pan across all plots
+- [x] Time cursor synchronization
+- [x] Click-to-set-time on plots
+- [x] Message browser with quick-plot buttons
 
-### Phase 4: Map/3D Viewer
-- [ ] CesiumJS integration (offline-capable with bundled assets)
-- [ ] 3D trajectory rendering with flight mode color coding
-- [ ] 3D vehicle models (plane, quad-X, quad-+)
-- [ ] Camera modes (follow, chase, free)
-- [ ] Waypoint/mission rendering
-- [ ] Geofence rendering
-- [ ] Map tile sources (OSM, etc.)
+### Phase 4: Map/3D Viewer [DONE]
+- [x] CesiumJS integration with bundled offline assets
+- [x] 3D trajectory rendering with flight mode color coding
+- [x] Camera modes (follow, chase, free)
+- [x] Waypoint/mission markers with labels
+- [x] Home position marker
+- [x] 2D canvas fallback when no internet for tiles
+- [x] OSM tile imagery provider
+- [ ] 3D vehicle models (plane, quad-X, quad-+) - future enhancement
 
-### Phase 5: Sidebar Panels
-- [ ] Parameters viewer
-- [ ] Messages viewer (STATUSTEXT)
-- [ ] Flight mode timeline
-- [ ] Device IDs panel
-- [ ] Attitude 3D viewer
-- [ ] EKF Helper
-- [ ] MagFit tool
+### Phase 5: Sidebar Panels [DONE]
+- [x] Parameters viewer with search
+- [x] Messages viewer (STATUSTEXT)
+- [x] Flight mode timeline with color coding
+- [x] Device IDs panel (decode hardware bitmask)
+- [x] Attitude indicator (canvas-based artificial horizon)
+- [x] EKF Helper (innovation ratios with health indicators)
+- [x] MagFit tool (offsets + raw mag statistics)
 
-### Phase 6: Timeline & Synchronization
-- [ ] Time bar / scrubber
-- [ ] Synchronized time cursor across plot + map + panels
-- [ ] Playback controls
-- [ ] Time range trimming
+### Phase 6: Timeline & Synchronization [DONE]
+- [x] Time bar / scrubber with click navigation
+- [x] Flight mode color segments on timeline
+- [x] Synchronized time cursor across plot + map + panels
+- [x] Playback controls with speed adjustment
+- [x] Global math functions for expressions
 
-### Phase 7: Polish & Extras
+### Phase 7: Polish & Extras [IN PROGRESS]
 - [ ] MAVLink TLOG parser
-- [ ] DJI log parser (if feasible)
 - [ ] Keyboard shortcuts
-- [ ] Responsive design
-- [ ] Dark/light theme
+- [ ] Geofence rendering on map
+- [ ] DataFlash text (.LOG) parser support
 - [ ] README
-- [ ] Final testing with real .BIN files
+- [ ] Final testing and bug fixes
 
 ## Status
 Started: 2026-03-28
-Current Phase: 1
+Current Phase: 7

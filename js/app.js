@@ -11,6 +11,7 @@ const App = {
         ExpressionEditor.init();
         MessageBrowser.init();
         MapViewer.init();
+        Keyboard.init();
 
         // Message browser button
         document.getElementById('btn-msg-browser')?.addEventListener('click', () => {

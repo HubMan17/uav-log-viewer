@@ -15,6 +15,7 @@
 
 // Import parsers (paths relative to the worker file location)
 importScripts('../parsers/dataflash.js');
+importScripts('../parsers/dataflash-text.js');
 importScripts('../parsers/mavlink.js');
 
 self.onmessage = function (e) {
@@ -46,6 +47,8 @@ self.onmessage = function (e) {
         let parser;
         if (logType === 'mavlink') {
             parser = new MavlinkParser(buffer, { onProgress });
+        } else if (logType === 'dataflash-text') {
+            parser = new DataFlashTextParser(buffer, { onProgress });
         } else {
             parser = new DataFlashParser(buffer, { onProgress });
         }
@@ -71,15 +74,26 @@ function detectLogType(buffer, filename) {
     // Check extension first
     const ext = (filename.split('.').pop() || '').toLowerCase();
     if (ext === 'tlog') return 'mavlink';
-    if (ext === 'bin' || ext === 'log') return 'dataflash';
 
-    // Fall back to magic bytes
+    // Check magic bytes
     if (buffer.byteLength >= 2) {
         const header = new Uint8Array(buffer, 0, 2);
         if (header[0] === 0xA3 && header[1] === 0x95) return 'dataflash';
         if (header[0] === 0xFE || header[0] === 0xFD) return 'mavlink';
     }
 
-    // Default to DataFlash
+    // .log extension could be text format - check if it starts with ASCII text
+    if (ext === 'log' && buffer.byteLength >= 3) {
+        const header = new Uint8Array(buffer, 0, 3);
+        // Check if first byte looks like ASCII text (FMT starts with 'F' = 0x46)
+        if (header[0] >= 0x20 && header[0] <= 0x7E) {
+            return 'dataflash-text';
+        }
+        return 'dataflash';
+    }
+
+    if (ext === 'bin') return 'dataflash';
+
+    // Default to DataFlash binary
     return 'dataflash';
 }
