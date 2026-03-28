@@ -334,25 +334,85 @@ const MapViewer = {
         if (!this.viewer || !State.mission.length) return;
         this.waypointEntities = [];
 
+        const wpPositions = [];
+
         State.mission.forEach((wp, i) => {
             if (!wp.lat || !wp.lng) return;
+            const pos = Cesium.Cartesian3.fromDegrees(wp.lng, wp.lat, wp.alt || 0);
+            wpPositions.push(pos);
+
             const entity = this.viewer.entities.add({
-                position: Cesium.Cartesian3.fromDegrees(wp.lng, wp.lat, wp.alt || 0),
-                point: { pixelSize: 8, color: Cesium.Color.ORANGE },
+                position: pos,
+                point: {
+                    pixelSize: 8,
+                    color: Cesium.Color.ORANGE,
+                    outlineColor: Cesium.Color.WHITE,
+                    outlineWidth: 1
+                },
                 label: {
                     text: String(i + 1),
-                    font: '12px sans-serif',
+                    font: '11px sans-serif',
                     fillColor: Cesium.Color.WHITE,
-                    pixelOffset: new Cesium.Cartesian2(0, -15)
+                    pixelOffset: new Cesium.Cartesian2(0, -15),
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    outlineWidth: 2,
+                    outlineColor: Cesium.Color.BLACK
                 }
             });
             this.waypointEntities.push(entity);
         });
+
+        // Connect waypoints with a line
+        if (wpPositions.length > 1) {
+            const lineEntity = this.viewer.entities.add({
+                polyline: {
+                    positions: wpPositions,
+                    width: 2,
+                    material: new Cesium.PolylineDashMaterialProperty({
+                        color: Cesium.Color.ORANGE.withAlpha(0.6),
+                        dashLength: 8
+                    }),
+                    clampToGround: false
+                }
+            });
+            this.waypointEntities.push(lineEntity);
+        }
     },
 
     drawFences() {
-        if (!this.viewer || !State.fences.length) return;
-        // Fence rendering with Cesium
+        if (!this.viewer) return;
+        this.fenceEntities = [];
+
+        // Fences from FNCE messages stored in State.messages
+        const fnce = State.messages['FNCE'];
+        if (!fnce || !fnce.data || !fnce.data.Lat || fnce.data.Lat.length === 0) return;
+
+        const lats = fnce.data.Lat;
+        const lngs = fnce.data.Lng;
+        const positions = [];
+
+        for (let i = 0; i < lats.length; i++) {
+            if (lats[i] === 0 && lngs[i] === 0) continue;
+            positions.push(Cesium.Cartesian3.fromDegrees(lngs[i], lats[i], 0));
+        }
+
+        if (positions.length > 2) {
+            // Close the polygon
+            positions.push(positions[0]);
+
+            const entity = this.viewer.entities.add({
+                polyline: {
+                    positions: positions,
+                    width: 2,
+                    material: new Cesium.PolylineDashMaterialProperty({
+                        color: Cesium.Color.fromCssColorString('#ff5252'),
+                        dashLength: 16
+                    }),
+                    clampToGround: true
+                }
+            });
+            this.fenceEntities.push(entity);
+        }
     },
 
     zoomToTrajectory() {
