@@ -6,9 +6,9 @@ const GraphDefinitions = {
     _definitions: {
         'Altitude': [
             { name: 'GPS vs Baro Alt', expressions: ['GPS.Alt', 'BARO.Alt'] },
-            { name: 'All Altitudes', expressions: ['GPS.Alt', 'BARO.Alt', 'CTUN.Alt'] },
-            { name: 'Desired vs Actual Alt', expressions: ['CTUN.DAlt', 'CTUN.Alt'] },
-            { name: 'Terrain Alt', expressions: ['CTUN.TAlt', 'CTUN.Alt', 'CTUN.SAlt'] },
+            { name: 'All Altitudes', expressions: ['GPS.Alt', 'BARO.Alt', 'AHR2.Alt'] },
+            { name: 'Desired vs Actual Alt (Copter)', expressions: ['CTUN.DAlt', 'CTUN.Alt'] },
+            { name: 'Terrain Alt (Copter)', expressions: ['CTUN.TAlt', 'CTUN.Alt', 'CTUN.SAlt'] },
             { name: 'Rangefinder Alt', expressions: ['RFND.Dist1', 'BARO.Alt'] },
             { name: 'AHR2 Alt', expressions: ['AHR2.Alt', 'GPS.Alt'] },
         ],
@@ -203,7 +203,11 @@ const GraphDefinitions = {
             { name: 'Position Alt', expressions: ['POS.Alt'] },
             { name: 'AHR2 Position', expressions: ['AHR2.Lat', 'AHR2.Lng'] },
             { name: 'AHR2 Alt', expressions: ['AHR2.Alt'] },
-            { name: 'CTUN Alt', expressions: ['CTUN.Alt', 'CTUN.DAlt', 'CTUN.BAlt'] },
+            { name: 'CTUN Alt (Copter)', expressions: ['CTUN.Alt', 'CTUN.DAlt', 'CTUN.BAlt'] },
+            { name: 'CTUN Plane Pitch', expressions: ['CTUN.NavPitch', 'CTUN.Pitch'] },
+            { name: 'CTUN Plane Roll', expressions: ['CTUN.NavRoll', 'CTUN.Roll'] },
+            { name: 'CTUN Plane Throttle', expressions: ['CTUN.ThO', 'CTUN.ThD'] },
+            { name: 'CTUN Airspeed', expressions: ['CTUN.As', 'CTUN.SAs'] },
             { name: 'NTUN Distances', expressions: ['NTUN.Dist', 'NTUN.TDst'] },
         ],
         'Radio': [
