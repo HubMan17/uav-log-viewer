@@ -1,0 +1,35 @@
+.info-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 12px;
+    height: 28px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.info-item i {
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+.info-value {
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.info-bar .info-filename {
+    color: var(--accent);
+    font-weight: 600;
+}

@@ -18,6 +18,9 @@ const App = {
             MessageBrowser.show();
         });
 
+        // Info bar
+        EventBus.on('parse:complete', () => this.updateInfoBar());
+
         // Handle window resize
         window.addEventListener('resize', Utils.debounce(() => {
             EventBus.emit('resize');
@@ -34,6 +37,27 @@ const App = {
         this.initMapResize();
 
         console.log('UAV Log Viewer initialized');
+    },
+
+    updateInfoBar() {
+        const bar = document.getElementById('info-bar');
+        if (!bar) return;
+        bar.style.display = '';
+
+        document.getElementById('info-filename').textContent = State.file ? State.file.name : '';
+
+        const vehicleType = FlightModes.detectVehicleType(State.params, State.formats);
+        document.getElementById('info-vehicle').textContent = vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1);
+
+        if (State.timeRange) {
+            const duration = (State.timeRange.end - State.timeRange.start) / 1e6;
+            const min = Math.floor(duration / 60);
+            const sec = Math.floor(duration % 60);
+            document.getElementById('info-duration').textContent = `${min}m ${sec}s`;
+        }
+
+        document.getElementById('info-messages').textContent = State.messageTypes.length + ' types';
+        document.getElementById('info-params').textContent = Object.keys(State.params).length + ' params';
     },
 
     initMapResize() {

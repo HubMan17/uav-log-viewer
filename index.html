@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/toolbar.css">
     <link rel="stylesheet" href="css/timebar.css">
     <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/info-bar.css">
     <link rel="stylesheet" href="libs/fontawesome/css/all.min.css">
 </head>
 <body>
@@ -163,6 +164,30 @@
 
             <!-- Main Content Area -->
             <main class="main-content">
+                <!-- Info Bar -->
+                <div class="info-bar" id="info-bar" style="display:none;">
+                    <div class="info-item">
+                        <i class="fas fa-file"></i>
+                        <span class="info-filename" id="info-filename"></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-plane"></i>
+                        <span class="info-value" id="info-vehicle"></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-clock"></i>
+                        <span class="info-value" id="info-duration"></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-database"></i>
+                        <span class="info-value" id="info-messages"></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-cog"></i>
+                        <span class="info-value" id="info-params"></span>
+                    </div>
+                </div>
+
                 <!-- Toolbar -->
                 <div class="toolbar" id="toolbar">
                     <div class="toolbar-left">
