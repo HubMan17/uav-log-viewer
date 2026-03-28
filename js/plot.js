@@ -117,13 +117,31 @@ const PlotManager = {
             });
         }
 
-        Plotly.newPlot(id + '-area', traces, layout, {
-            responsive: true,
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'],
-            displaylogo: false,
-            scrollZoom: true
-        });
+        if (traces.length === 0) {
+            const area = document.getElementById(id + '-area');
+            area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:0.85rem;">No data found for: ' +
+                (config.expressions || []).join(', ') + '</div>';
+            State.plots.push({ id, config, traces });
+            return;
+        }
+
+        console.log('Plotting', traces.length, 'traces for', config.title);
+
+        try {
+            Plotly.newPlot(id + '-area', traces, layout, {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'],
+                displaylogo: false,
+                scrollZoom: true
+            });
+        } catch (e) {
+            console.error('Plotly.newPlot failed:', e);
+            const area = document.getElementById(id + '-area');
+            area.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--error);">Plot error: ' + e.message + '</div>';
+            State.plots.push({ id, config, traces });
+            return;
+        }
 
         // Hover sync
         const plotArea = document.getElementById(id + '-area');
@@ -170,37 +188,64 @@ const PlotManager = {
     resolveExpression(expr, colorIdx) {
         // expr format: "MSG.Field" or "MSG[instance].Field"
         const match = expr.match(/^(\w+)(?:\[(\d+)\])?\.(\w+)$/);
-        if (!match) return null;
+        if (!match) {
+            console.warn('Plot: invalid expression format:', expr);
+            return null;
+        }
 
         let [, msgType, instance, field] = match;
 
         // Handle instance bracket notation: IMU[0] -> IMU, IMU[1] -> IMU2, IMU[2] -> IMU3
-        // ArduPilot stores instances as separate message types (IMU, IMU2, IMU3, etc.)
         if (instance !== undefined) {
             const instNum = parseInt(instance, 10);
             if (instNum > 0) {
                 msgType = msgType + (instNum + 1);
             }
-            // instance 0 means the base type (e.g., IMU[0] -> IMU)
         }
 
         const msgData = State.messages[msgType];
-        if (!msgData || !msgData.data) return null;
+        if (!msgData || !msgData.data) {
+            console.warn('Plot: message type not found:', msgType);
+            return null;
+        }
 
         const timeData = msgData.data.TimeUS;
         const fieldData = msgData.data[field];
 
-        if (!timeData || !fieldData) return null;
+        if (!timeData || !fieldData) {
+            console.warn('Plot: field not found:', field, 'in', msgType,
+                '(available:', Object.keys(msgData.data).join(', ') + ')');
+            return null;
+        }
 
-        // Convert time to seconds from start
+        // Convert time to seconds from start, with downsampling for large datasets
         const startTime = State.timeRange ? State.timeRange.start : 0;
-        const x = timeData.map(t => (t - startTime) / 1e6);
+        const maxPoints = 20000;
+        const len = timeData.length;
+        const step = len > maxPoints ? Math.ceil(len / maxPoints) : 1;
+
+        let x, y;
+        if (step > 1) {
+            const n = Math.ceil(len / step);
+            x = new Array(n);
+            y = new Array(n);
+            for (let i = 0, j = 0; i < len; i += step, j++) {
+                x[j] = (timeData[i] - startTime) / 1e6;
+                y[j] = fieldData[i];
+            }
+        } else {
+            x = new Array(len);
+            y = fieldData;
+            for (let i = 0; i < len; i++) {
+                x[i] = (timeData[i] - startTime) / 1e6;
+            }
+        }
 
         return {
             x: x,
-            y: fieldData,
+            y: y,
             name: expr,
-            type: 'scattergl',
+            type: 'scatter',
             mode: 'lines',
             line: {
                 color: State.colors[colorIdx % State.colors.length],

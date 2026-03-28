@@ -1,318 +1,246 @@
 /**
- * Predefined graph definitions for common ArduPilot log analysis
+ * Predefined graph definitions for common ArduPilot log analysis.
+ * Organized to match and extend the original UAV Log Viewer categories.
  */
 const GraphDefinitions = {
     _definitions: {
-        'Speed': [
-            {
-                name: 'Ground vs Air Speed',
-                expressions: ['GPS.Spd', 'ARSP.Airspeed'],
-            },
-            {
-                name: 'Ground Speed',
-                expressions: ['GPS.Spd'],
-            }
+        'Altitude': [
+            { name: 'GPS vs Baro Alt', expressions: ['GPS.Alt', 'BARO.Alt'] },
+            { name: 'All Altitudes', expressions: ['GPS.Alt', 'BARO.Alt', 'CTUN.Alt'] },
+            { name: 'Desired vs Actual Alt', expressions: ['CTUN.DAlt', 'CTUN.Alt'] },
+            { name: 'Terrain Alt', expressions: ['CTUN.TAlt', 'CTUN.Alt', 'CTUN.SAlt'] },
+            { name: 'Rangefinder Alt', expressions: ['RFND.Dist1', 'BARO.Alt'] },
+            { name: 'AHR2 Alt', expressions: ['AHR2.Alt', 'GPS.Alt'] },
         ],
         'Attitude': [
-            {
-                name: 'Roll and Pitch',
-                expressions: ['ATT.Roll', 'ATT.Pitch'],
-            },
-            {
-                name: 'RP Comparison',
-                expressions: ['ATT.Roll', 'ATT.DesRoll', 'ATT.Pitch', 'ATT.DesPitch'],
-            },
-            {
-                name: 'Yaw',
-                expressions: ['ATT.Yaw', 'ATT.DesYaw'],
-            },
-            {
-                name: 'Roll Control',
-                expressions: ['ATT.Roll', 'ATT.DesRoll'],
-            },
-            {
-                name: 'Pitch Control',
-                expressions: ['ATT.Pitch', 'ATT.DesPitch'],
-            }
+            { name: 'Roll', expressions: ['ATT.Roll', 'ATT.DesRoll'] },
+            { name: 'Pitch', expressions: ['ATT.Pitch', 'ATT.DesPitch'] },
+            { name: 'Yaw', expressions: ['ATT.Yaw', 'ATT.DesYaw'] },
+            { name: 'Roll and Pitch', expressions: ['ATT.Roll', 'ATT.Pitch'] },
+            { name: 'RP Comparison', expressions: ['ATT.Roll', 'ATT.DesRoll', 'ATT.Pitch', 'ATT.DesPitch'] },
+            { name: 'Yaw Comparison', expressions: ['ATT.Yaw', 'ATT.DesYaw'] },
+            { name: 'Roll Rate', expressions: ['RATE.R', 'RATE.RDes'] },
+            { name: 'Pitch Rate', expressions: ['RATE.P', 'RATE.PDes'] },
+            { name: 'Yaw Rate', expressions: ['RATE.Y', 'RATE.YDes'] },
         ],
-        'Sensors/Accelerometer': [
-            {
-                name: 'Accelerometer 1',
-                expressions: ['IMU.AccX', 'IMU.AccY', 'IMU.AccZ'],
-            },
-            {
-                name: 'Accelerometer 2',
-                expressions: ['IMU2.AccX', 'IMU2.AccY', 'IMU2.AccZ'],
-            },
-            {
-                name: 'Vibration',
-                expressions: ['VIBE.VibeX', 'VIBE.VibeY', 'VIBE.VibeZ'],
-            },
-            {
-                name: 'Clipping',
-                expressions: ['VIBE.Clip0', 'VIBE.Clip1', 'VIBE.Clip2'],
-            }
-        ],
-        'Sensors/Gyroscope': [
-            {
-                name: 'Gyro 1',
-                expressions: ['IMU.GyrX', 'IMU.GyrY', 'IMU.GyrZ'],
-            },
-            {
-                name: 'Gyro 2',
-                expressions: ['IMU2.GyrX', 'IMU2.GyrY', 'IMU2.GyrZ'],
-            }
-        ],
-        'Sensors/Barometer': [
-            {
-                name: 'Barometer 1',
-                expressions: ['BARO.Alt', 'BARO.Press'],
-            },
-            {
-                name: 'Barometer 2',
-                expressions: ['BAR2.Alt', 'BAR2.Press'],
-            },
-            {
-                name: 'Barometer Comparison',
-                expressions: ['BARO.Alt', 'BAR2.Alt'],
-            }
-        ],
-        'Sensors/Compass': [
-            {
-                name: 'Compass 1',
-                expressions: ['MAG.MagX', 'MAG.MagY', 'MAG.MagZ'],
-            },
-            {
-                name: 'Compass 2',
-                expressions: ['MAG2.MagX', 'MAG2.MagY', 'MAG2.MagZ'],
-            },
-            {
-                name: 'Compass vs Yaw',
-                expressions: ['ATT.Yaw', 'MAG.MagX'],
-            }
-        ],
-        'Sensors/Lidar': [
-            {
-                name: 'Rangefinder vs Baro',
-                expressions: ['RFND.Dist1', 'BARO.Alt'],
-            }
+        'Speed': [
+            { name: 'Ground Speed', expressions: ['GPS.Spd'] },
+            { name: 'Ground vs Air Speed', expressions: ['GPS.Spd', 'ARSP.Airspeed'] },
+            { name: 'Airspeed', expressions: ['ARSP.Airspeed'] },
+            { name: 'VFR HUD Speed', expressions: ['VFR.AS', 'VFR.GS'] },
+            { name: 'Climb Rate', expressions: ['CTUN.CRt', 'CTUN.DCRt'] },
+            { name: 'GPS Velocity', expressions: ['GPS.VZ'] },
         ],
         'GPS': [
-            {
-                name: 'GPS Status',
-                expressions: ['GPS.Status', 'GPS.NSats'],
-            },
-            {
-                name: 'GPS HDop',
-                expressions: ['GPS.HDop'],
-            },
-            {
-                name: 'GPS Altitude',
-                expressions: ['GPS.Alt'],
-            },
-            {
-                name: 'GPS Speed',
-                expressions: ['GPS.Spd'],
-            }
+            { name: 'GPS Status', expressions: ['GPS.Status'] },
+            { name: 'Satellites', expressions: ['GPS.NSats'] },
+            { name: 'HDop', expressions: ['GPS.HDop'] },
+            { name: 'GPS Altitude', expressions: ['GPS.Alt'] },
+            { name: 'GPS Speed', expressions: ['GPS.Spd'] },
+            { name: 'GPS Course', expressions: ['GPS.GCrs'] },
+            { name: 'GPS Vertical Speed', expressions: ['GPS.VZ'] },
+            { name: 'GPA Accuracy', expressions: ['GPA.HAcc', 'GPA.VAcc', 'GPA.SAcc'] },
+            { name: 'GPA Delta', expressions: ['GPA.Delta'] },
+        ],
+        'Sensors/Accelerometer': [
+            { name: 'Accel 1', expressions: ['IMU.AccX', 'IMU.AccY', 'IMU.AccZ'] },
+            { name: 'Accel 2', expressions: ['IMU2.AccX', 'IMU2.AccY', 'IMU2.AccZ'] },
+            { name: 'Accel 3', expressions: ['IMU3.AccX', 'IMU3.AccY', 'IMU3.AccZ'] },
+            { name: 'Accel X Comparison', expressions: ['IMU.AccX', 'IMU2.AccX', 'IMU3.AccX'] },
+            { name: 'Accel Y Comparison', expressions: ['IMU.AccY', 'IMU2.AccY', 'IMU3.AccY'] },
+            { name: 'Accel Z Comparison', expressions: ['IMU.AccZ', 'IMU2.AccZ', 'IMU3.AccZ'] },
+            { name: 'Vibration', expressions: ['VIBE.VibeX', 'VIBE.VibeY', 'VIBE.VibeZ'] },
+            { name: 'Clipping', expressions: ['VIBE.Clip0', 'VIBE.Clip1', 'VIBE.Clip2'] },
+        ],
+        'Sensors/Gyroscope': [
+            { name: 'Gyro 1', expressions: ['IMU.GyrX', 'IMU.GyrY', 'IMU.GyrZ'] },
+            { name: 'Gyro 2', expressions: ['IMU2.GyrX', 'IMU2.GyrY', 'IMU2.GyrZ'] },
+            { name: 'Gyro 3', expressions: ['IMU3.GyrX', 'IMU3.GyrY', 'IMU3.GyrZ'] },
+            { name: 'Gyro X Comparison', expressions: ['IMU.GyrX', 'IMU2.GyrX', 'IMU3.GyrX'] },
+            { name: 'Gyro Y Comparison', expressions: ['IMU.GyrY', 'IMU2.GyrY', 'IMU3.GyrY'] },
+            { name: 'Gyro Z Comparison', expressions: ['IMU.GyrZ', 'IMU2.GyrZ', 'IMU3.GyrZ'] },
+        ],
+        'Sensors/Barometer': [
+            { name: 'Baro 1 Alt', expressions: ['BARO.Alt'] },
+            { name: 'Baro 1 Press', expressions: ['BARO.Press'] },
+            { name: 'Baro 1 Temp', expressions: ['BARO.Temp'] },
+            { name: 'Baro 2 Alt', expressions: ['BAR2.Alt'] },
+            { name: 'Baro Comparison', expressions: ['BARO.Alt', 'BAR2.Alt'] },
+            { name: 'Baro Pressure', expressions: ['BARO.Press', 'BAR2.Press'] },
+            { name: 'Baro Drift', expressions: ['BARO.GndTemp'] },
+        ],
+        'Sensors/Compass': [
+            { name: 'Compass 1', expressions: ['MAG.MagX', 'MAG.MagY', 'MAG.MagZ'] },
+            { name: 'Compass 2', expressions: ['MAG2.MagX', 'MAG2.MagY', 'MAG2.MagZ'] },
+            { name: 'Compass 3', expressions: ['MAG3.MagX', 'MAG3.MagY', 'MAG3.MagZ'] },
+            { name: 'Compass X Comparison', expressions: ['MAG.MagX', 'MAG2.MagX', 'MAG3.MagX'] },
+            { name: 'Compass Y Comparison', expressions: ['MAG.MagY', 'MAG2.MagY', 'MAG3.MagY'] },
+            { name: 'Compass Z Comparison', expressions: ['MAG.MagZ', 'MAG2.MagZ', 'MAG3.MagZ'] },
+            { name: 'Compass Offsets', expressions: ['MAG.OfsX', 'MAG.OfsY', 'MAG.OfsZ'] },
+            { name: 'Compass vs Yaw', expressions: ['ATT.Yaw'] },
+        ],
+        'Sensors/Lidar': [
+            { name: 'Rangefinder 1', expressions: ['RFND.Dist1'] },
+            { name: 'Rangefinder vs Baro', expressions: ['RFND.Dist1', 'BARO.Alt'] },
         ],
         'Power': [
-            {
-                name: 'Battery Voltage',
-                expressions: ['BAT.Volt'],
-            },
-            {
-                name: 'Battery Current',
-                expressions: ['BAT.Curr'],
-            },
-            {
-                name: 'Battery Consumed',
-                expressions: ['BAT.CurrTot'],
-            },
-            {
-                name: 'Board Voltage',
-                expressions: ['POWR.Vcc'],
-            }
+            { name: 'Battery Voltage', expressions: ['BAT.Volt'] },
+            { name: 'Battery Current', expressions: ['BAT.Curr'] },
+            { name: 'Battery Consumed', expressions: ['BAT.CurrTot'] },
+            { name: 'Battery Energy', expressions: ['BAT.EnrgTot'] },
+            { name: 'Battery 2 Voltage', expressions: ['BAT2.Volt'] },
+            { name: 'Board Voltage', expressions: ['POWR.Vcc'] },
+            { name: 'Servo Rail Voltage', expressions: ['POWR.VServo'] },
+            { name: 'Board Flags', expressions: ['POWR.Flags'] },
         ],
         'RC': [
-            {
-                name: 'RC Input 1-4',
-                expressions: ['RCIN.C1', 'RCIN.C2', 'RCIN.C3', 'RCIN.C4'],
-            },
-            {
-                name: 'RC Input 5-8',
-                expressions: ['RCIN.C5', 'RCIN.C6', 'RCIN.C7', 'RCIN.C8'],
-            },
-            {
-                name: 'RC Output 1-4',
-                expressions: ['RCOU.C1', 'RCOU.C2', 'RCOU.C3', 'RCOU.C4'],
-            },
-            {
-                name: 'RC Output 5-8',
-                expressions: ['RCOU.C5', 'RCOU.C6', 'RCOU.C7', 'RCOU.C8'],
-            }
+            { name: 'RC Input 1-4', expressions: ['RCIN.C1', 'RCIN.C2', 'RCIN.C3', 'RCIN.C4'] },
+            { name: 'RC Input 5-8', expressions: ['RCIN.C5', 'RCIN.C6', 'RCIN.C7', 'RCIN.C8'] },
+            { name: 'RC Input 9-12', expressions: ['RCIN.C9', 'RCIN.C10', 'RCIN.C11', 'RCIN.C12'] },
+            { name: 'RC Output 1-4', expressions: ['RCOU.C1', 'RCOU.C2', 'RCOU.C3', 'RCOU.C4'] },
+            { name: 'RC Output 5-8', expressions: ['RCOU.C5', 'RCOU.C6', 'RCOU.C7', 'RCOU.C8'] },
+            { name: 'RC Output 9-12', expressions: ['RCOU.C9', 'RCOU.C10', 'RCOU.C11', 'RCOU.C12'] },
+            { name: 'AETR', expressions: ['AETR.Ail', 'AETR.Elev', 'AETR.Thr', 'AETR.Rudd'] },
         ],
         'Servos': [
-            {
-                name: 'Servos 1-4',
-                expressions: ['RCOU.C1', 'RCOU.C2', 'RCOU.C3', 'RCOU.C4'],
-            },
-            {
-                name: 'Servos 1-8',
-                expressions: ['RCOU.C1', 'RCOU.C2', 'RCOU.C3', 'RCOU.C4', 'RCOU.C5', 'RCOU.C6', 'RCOU.C7', 'RCOU.C8'],
-            }
+            { name: 'Servos 1-4', expressions: ['RCOU.C1', 'RCOU.C2', 'RCOU.C3', 'RCOU.C4'] },
+            { name: 'Servos 5-8', expressions: ['RCOU.C5', 'RCOU.C6', 'RCOU.C7', 'RCOU.C8'] },
+            { name: 'Servos 1-8', expressions: ['RCOU.C1', 'RCOU.C2', 'RCOU.C3', 'RCOU.C4', 'RCOU.C5', 'RCOU.C6', 'RCOU.C7', 'RCOU.C8'] },
         ],
         'EKF2': [
-            {
-                name: 'EKF2 Velocity Innovations',
-                expressions: ['NKF1.IVN', 'NKF1.IVE', 'NKF1.IVD'],
-            },
-            {
-                name: 'EKF2 Position Innovations',
-                expressions: ['NKF1.IPN', 'NKF1.IPE', 'NKF1.IPD'],
-            },
-            {
-                name: 'EKF2 Mag Innovations',
-                expressions: ['NKF2.IMX', 'NKF2.IMY', 'NKF2.IMZ'],
-            },
-            {
-                name: 'EKF2 Gyro Bias',
-                expressions: ['NKF1.GyrX', 'NKF1.GyrY', 'NKF1.GyrZ'],
-            },
-            {
-                name: 'EKF2 Accel Bias',
-                expressions: ['NKF3.AccBX', 'NKF3.AccBY', 'NKF3.AccBZ'],
-            },
-            {
-                name: 'EKF2 Wind',
-                expressions: ['NKF3.WindN', 'NKF3.WindE'],
-            },
-            {
-                name: 'EKF2 Euler Roll',
-                expressions: ['NKF1.Roll'],
-            },
-            {
-                name: 'EKF2 Euler Pitch',
-                expressions: ['NKF1.Pitch'],
-            },
-            {
-                name: 'EKF2 Euler Yaw',
-                expressions: ['NKF1.Yaw'],
-            }
+            { name: 'EKF2 Velocity Innovations', expressions: ['NKF1.IVN', 'NKF1.IVE', 'NKF1.IVD'] },
+            { name: 'EKF2 Position Innovations', expressions: ['NKF1.IPN', 'NKF1.IPE', 'NKF1.IPD'] },
+            { name: 'EKF2 Mag Innovations', expressions: ['NKF2.IMX', 'NKF2.IMY', 'NKF2.IMZ'] },
+            { name: 'EKF2 Euler Roll', expressions: ['NKF1.Roll'] },
+            { name: 'EKF2 Euler Pitch', expressions: ['NKF1.Pitch'] },
+            { name: 'EKF2 Euler Yaw', expressions: ['NKF1.Yaw'] },
+            { name: 'EKF2 Gyro Bias', expressions: ['NKF1.GyrX', 'NKF1.GyrY', 'NKF1.GyrZ'] },
+            { name: 'EKF2 Accel Bias', expressions: ['NKF3.AccBX', 'NKF3.AccBY', 'NKF3.AccBZ'] },
+            { name: 'EKF2 Wind', expressions: ['NKF3.WindN', 'NKF3.WindE'] },
+            { name: 'EKF2 Velocity N', expressions: ['NKF1.VN'] },
+            { name: 'EKF2 Velocity E', expressions: ['NKF1.VE'] },
+            { name: 'EKF2 Velocity D', expressions: ['NKF1.VD'] },
+            { name: 'EKF2 Pos D', expressions: ['NKF1.PD'] },
+            { name: 'EKF2 Pos NE', expressions: ['NKF1.PN', 'NKF1.PE'] },
+            { name: 'EKF2 Mag Earth', expressions: ['NKF3.MN', 'NKF3.ME', 'NKF3.MD'] },
+            { name: 'EKF2 Mag Body', expressions: ['NKF3.MX', 'NKF3.MY', 'NKF3.MZ'] },
+            { name: 'EKF2 Gyro Scale Factor', expressions: ['NKF3.GX', 'NKF3.GY', 'NKF3.GZ'] },
+            { name: 'EKF2 Origin Height', expressions: ['NKF1.OH'] },
+            { name: 'EKF2 Solution Status', expressions: ['NKF4.SS'] },
+            { name: 'EKF2 GPS Check', expressions: ['NKF4.GPS'] },
+            { name: 'EKF2 Innovation SV/SP/SH', expressions: ['NKF4.SV', 'NKF4.SP', 'NKF4.SH'] },
+            { name: 'EKF2 Innovation SM/SVT', expressions: ['NKF4.SM', 'NKF4.SVT'] },
+            { name: 'EKF2 Normalised Innovations', expressions: ['NKF4.SV', 'NKF4.SP', 'NKF4.SH', 'NKF4.SM'] },
+            { name: 'EKF2 Optical Flow', expressions: ['NKF5.FIX', 'NKF5.FIY'] },
+            { name: 'EKF2 Rangefinder', expressions: ['NKF5.HAGL'] },
         ],
         'EKF3': [
-            {
-                name: 'EKF3 Velocity Innovations',
-                expressions: ['XKF1.IVN', 'XKF1.IVE', 'XKF1.IVD'],
-            },
-            {
-                name: 'EKF3 Position Innovations',
-                expressions: ['XKF1.IPN', 'XKF1.IPE', 'XKF1.IPD'],
-            },
-            {
-                name: 'EKF3 Mag Innovations',
-                expressions: ['XKF2.IMX', 'XKF2.IMY', 'XKF2.IMZ'],
-            },
-            {
-                name: 'EKF3 Gyro Bias',
-                expressions: ['XKF1.GyrX', 'XKF1.GyrY', 'XKF1.GyrZ'],
-            },
-            {
-                name: 'EKF3 Accel Bias',
-                expressions: ['XKF3.AccBX', 'XKF3.AccBY', 'XKF3.AccBZ'],
-            },
-            {
-                name: 'EKF3 Wind',
-                expressions: ['XKF3.WindN', 'XKF3.WindE'],
-            },
-            {
-                name: 'EKF3 Solution Status',
-                expressions: ['XKF4.SS'],
-            }
+            { name: 'EKF3 Velocity Innovations', expressions: ['XKF1.IVN', 'XKF1.IVE', 'XKF1.IVD'] },
+            { name: 'EKF3 Position Innovations', expressions: ['XKF1.IPN', 'XKF1.IPE', 'XKF1.IPD'] },
+            { name: 'EKF3 Mag Innovations', expressions: ['XKF2.IMX', 'XKF2.IMY', 'XKF2.IMZ'] },
+            { name: 'EKF3 Euler Roll', expressions: ['XKF1.Roll'] },
+            { name: 'EKF3 Euler Pitch', expressions: ['XKF1.Pitch'] },
+            { name: 'EKF3 Euler Yaw', expressions: ['XKF1.Yaw'] },
+            { name: 'EKF3 Gyro Bias', expressions: ['XKF1.GyrX', 'XKF1.GyrY', 'XKF1.GyrZ'] },
+            { name: 'EKF3 Accel Bias', expressions: ['XKF3.AccBX', 'XKF3.AccBY', 'XKF3.AccBZ'] },
+            { name: 'EKF3 Wind', expressions: ['XKF3.WindN', 'XKF3.WindE'] },
+            { name: 'EKF3 Wind Speed', expressions: ['XKF3.WindN', 'XKF3.WindE'] },
+            { name: 'EKF3 Velocity N', expressions: ['XKF1.VN'] },
+            { name: 'EKF3 Velocity E', expressions: ['XKF1.VE'] },
+            { name: 'EKF3 Velocity D', expressions: ['XKF1.VD'] },
+            { name: 'EKF3 Pos D', expressions: ['XKF1.PD'] },
+            { name: 'EKF3 Pos NE', expressions: ['XKF1.PN', 'XKF1.PE'] },
+            { name: 'EKF3 Mag Earth', expressions: ['XKF3.MN', 'XKF3.ME', 'XKF3.MD'] },
+            { name: 'EKF3 Mag Body', expressions: ['XKF3.MX', 'XKF3.MY', 'XKF3.MZ'] },
+            { name: 'EKF3 Gyro Scale', expressions: ['XKF3.GX', 'XKF3.GY', 'XKF3.GZ'] },
+            { name: 'EKF3 Origin Height', expressions: ['XKF1.OH'] },
+            { name: 'EKF3 Solution Status', expressions: ['XKF4.SS'] },
+            { name: 'EKF3 Innovation SV/SP/SH', expressions: ['XKF4.SV', 'XKF4.SP', 'XKF4.SH'] },
+            { name: 'EKF3 Innovation SM/SVT', expressions: ['XKF4.SM', 'XKF4.SVT'] },
+            { name: 'EKF3 Normalised Innovations', expressions: ['XKF4.SV', 'XKF4.SP', 'XKF4.SH', 'XKF4.SM'] },
+            { name: 'EKF3 Error Scores', expressions: ['XKFS.PEX', 'XKFS.PEY', 'XKFS.PEZ'] },
+            { name: 'EKF3 Optical Flow', expressions: ['XKF5.FIX', 'XKF5.FIY'] },
+            { name: 'EKF3 Rangefinder', expressions: ['XKF5.HAGL'] },
+            { name: 'EKF3 Body Accel', expressions: ['XKF5.BAX', 'XKF5.BAY', 'XKF5.BAZ'] },
         ],
         'PID/Copter': [
-            {
-                name: 'Rate Roll PID',
-                expressions: ['PIDR.P', 'PIDR.I', 'PIDR.D', 'PIDR.Tar', 'PIDR.Act'],
-            },
-            {
-                name: 'Rate Pitch PID',
-                expressions: ['PIDP.P', 'PIDP.I', 'PIDP.D', 'PIDP.Tar', 'PIDP.Act'],
-            },
-            {
-                name: 'Rate Yaw PID',
-                expressions: ['PIDY.P', 'PIDY.I', 'PIDY.D', 'PIDY.Tar', 'PIDY.Act'],
-            },
-            {
-                name: 'Altitude PID',
-                expressions: ['PIDA.P', 'PIDA.I', 'PIDA.D', 'PIDA.Tar', 'PIDA.Act'],
-            },
-            {
-                name: 'Desired vs Achieved Roll',
-                expressions: ['ATT.DesRoll', 'ATT.Roll'],
-            },
-            {
-                name: 'Desired vs Achieved Pitch',
-                expressions: ['ATT.DesPitch', 'ATT.Pitch'],
-            },
-            {
-                name: 'Desired vs Achieved Yaw',
-                expressions: ['ATT.DesYaw', 'ATT.Yaw'],
-            }
+            { name: 'Rate Roll PID', expressions: ['PIDR.P', 'PIDR.I', 'PIDR.D'] },
+            { name: 'Rate Roll Tar vs Act', expressions: ['PIDR.Tar', 'PIDR.Act'] },
+            { name: 'Rate Pitch PID', expressions: ['PIDP.P', 'PIDP.I', 'PIDP.D'] },
+            { name: 'Rate Pitch Tar vs Act', expressions: ['PIDP.Tar', 'PIDP.Act'] },
+            { name: 'Rate Yaw PID', expressions: ['PIDY.P', 'PIDY.I', 'PIDY.D'] },
+            { name: 'Rate Yaw Tar vs Act', expressions: ['PIDY.Tar', 'PIDY.Act'] },
+            { name: 'Altitude PID', expressions: ['PIDA.P', 'PIDA.I', 'PIDA.D'] },
+            { name: 'Altitude Tar vs Act', expressions: ['PIDA.Tar', 'PIDA.Act'] },
+            { name: 'Desired vs Roll', expressions: ['ATT.DesRoll', 'ATT.Roll'] },
+            { name: 'Desired vs Pitch', expressions: ['ATT.DesPitch', 'ATT.Pitch'] },
+            { name: 'Desired vs Yaw', expressions: ['ATT.DesYaw', 'ATT.Yaw'] },
+            { name: 'PIQR', expressions: ['PIQR.P', 'PIQR.I', 'PIQR.D', 'PIQR.FF'] },
+            { name: 'PIQP', expressions: ['PIQP.P', 'PIQP.I', 'PIQP.D', 'PIQP.FF'] },
+            { name: 'PIQY', expressions: ['PIQY.P', 'PIQY.I', 'PIQY.D', 'PIQY.FF'] },
+            { name: 'PIQA', expressions: ['PIQA.P', 'PIQA.I', 'PIQA.D', 'PIQA.FF'] },
         ],
         'PID/Plane': [
-            {
-                name: 'Pitch Controller',
-                expressions: ['PIDP.P', 'PIDP.I', 'PIDP.D', 'PIDP.Tar', 'PIDP.Act'],
-            },
-            {
-                name: 'Roll Controller',
-                expressions: ['PIDR.P', 'PIDR.I', 'PIDR.D', 'PIDR.Tar', 'PIDR.Act'],
-            }
+            { name: 'Pitch Controller', expressions: ['PIDP.P', 'PIDP.I', 'PIDP.D'] },
+            { name: 'Roll Controller', expressions: ['PIDR.P', 'PIDR.I', 'PIDR.D'] },
+            { name: 'Yaw Controller', expressions: ['PIDY.P', 'PIDY.I', 'PIDY.D'] },
+            { name: 'PIDN (NavRoll)', expressions: ['PIDN.P', 'PIDN.I', 'PIDN.D'] },
+            { name: 'PIDE (NavPitch)', expressions: ['PIDE.P', 'PIDE.I', 'PIDE.D'] },
+            { name: 'Roll Tar vs Act', expressions: ['PIDR.Tar', 'PIDR.Act'] },
+            { name: 'Pitch Tar vs Act', expressions: ['PIDP.Tar', 'PIDP.Act'] },
         ],
         'TECS': [
-            {
-                name: 'TECS Height',
-                expressions: ['TECS.h', 'TECS.dh'],
-            },
-            {
-                name: 'TECS Speed',
-                expressions: ['TECS.sp', 'TECS.dsp'],
-            }
-        ],
-        'Altitude': [
-            {
-                name: 'All Altitudes',
-                expressions: ['GPS.Alt', 'BARO.Alt', 'CTUN.Alt'],
-            },
-            {
-                name: 'GPS vs Baro',
-                expressions: ['GPS.Alt', 'BARO.Alt'],
-            },
-            {
-                name: 'Desired vs Actual',
-                expressions: ['CTUN.DAlt', 'CTUN.Alt'],
-            }
+            { name: 'TECS Height', expressions: ['TECS.h', 'TECS.dh'] },
+            { name: 'TECS Speed', expressions: ['TECS.sp', 'TECS.dsp'] },
+            { name: 'TECS Throttle', expressions: ['TECS.th', 'TECS.dth'] },
+            { name: 'TECS Pitch', expressions: ['TECS.pt', 'TECS.dpt'] },
+            { name: 'TECS Flags', expressions: ['TECS.f'] },
+            { name: 'TEC2', expressions: ['TEC2.pmax', 'TEC2.pmin'] },
+            { name: 'TEC3 Scaling', expressions: ['TEC3.wmin', 'TEC3.wmax'] },
         ],
         'Position': [
-            {
-                name: 'Position XY',
-                expressions: ['POS.Lat', 'POS.Lng'],
-            },
-            {
-                name: 'Position vs EKF',
-                expressions: ['POS.Lat', 'XKF1.PN'],
-            }
+            { name: 'Position NE', expressions: ['POS.Lat', 'POS.Lng'] },
+            { name: 'Position Alt', expressions: ['POS.Alt'] },
+            { name: 'AHR2 Position', expressions: ['AHR2.Lat', 'AHR2.Lng'] },
+            { name: 'AHR2 Alt', expressions: ['AHR2.Alt'] },
+            { name: 'CTUN Alt', expressions: ['CTUN.Alt', 'CTUN.DAlt', 'CTUN.BAlt'] },
+            { name: 'NTUN Distances', expressions: ['NTUN.Dist', 'NTUN.TDst'] },
         ],
         'Radio': [
-            {
-                name: 'RSSI',
-                expressions: ['RAD.RSSI', 'RAD.RemRSSI'],
-            },
-            {
-                name: 'Radio Errors',
-                expressions: ['RAD.TxBuf', 'RAD.Noise', 'RAD.RemNoise'],
-            }
-        ]
+            { name: 'RSSI', expressions: ['RAD.RSSI', 'RAD.RemRSSI'] },
+            { name: 'Radio Noise', expressions: ['RAD.Noise', 'RAD.RemNoise'] },
+            { name: 'Radio TxBuf', expressions: ['RAD.TxBuf'] },
+            { name: 'Radio Errors', expressions: ['RAD.RxErrors', 'RAD.Fixed'] },
+            { name: 'MAVLink Packets', expressions: ['MAV.Pkts', 'MAV.Losses'] },
+        ],
+        'Vibration': [
+            { name: 'Vibration XYZ', expressions: ['VIBE.VibeX', 'VIBE.VibeY', 'VIBE.VibeZ'] },
+            { name: 'Clipping', expressions: ['VIBE.Clip0', 'VIBE.Clip1', 'VIBE.Clip2'] },
+            { name: 'IMU Accel Z', expressions: ['IMU.AccZ'] },
+        ],
+        'Motor': [
+            { name: 'Motor Output 1-4', expressions: ['RCOU.C1', 'RCOU.C2', 'RCOU.C3', 'RCOU.C4'] },
+            { name: 'Motor Battery', expressions: ['MOTB.LiftMax', 'MOTB.BatVolt', 'MOTB.ThLimit'] },
+            { name: 'CTRL', expressions: ['CTRL.RMSRollP', 'CTRL.RMSRollD', 'CTRL.RMSPitchP', 'CTRL.RMSPitchD'] },
+        ],
+        'Navigation': [
+            { name: 'NTUN WpDist', expressions: ['NTUN.Dist', 'NTUN.TDst'] },
+            { name: 'NTUN Bearing', expressions: ['NTUN.TBrg', 'NTUN.NavBrg'] },
+            { name: 'CTUN Throttle', expressions: ['CTUN.ThO', 'CTUN.ThH'] },
+            { name: 'AOA & SSA', expressions: ['AOA.AOA', 'AOA.SSA'] },
+        ],
+        'System': [
+            { name: 'Scheduler Load', expressions: ['PM.Load', 'PM.Mem'] },
+            { name: 'Scheduler NLon/NLoop', expressions: ['PM.NLon', 'PM.NLoop'] },
+            { name: 'DSF Write', expressions: ['DSF.Dp', 'DSF.Blk'] },
+        ],
+        'QuadPlane': [
+            { name: 'QTUN Alt', expressions: ['QTUN.DAlt', 'QTUN.Alt'] },
+            { name: 'QTUN Throttle', expressions: ['QTUN.ThO', 'QTUN.ThH'] },
+            { name: 'QTUN Climb Rate', expressions: ['QTUN.CRt', 'QTUN.DCRt'] },
+            { name: 'QTUN Transition', expressions: ['QTUN.Trn'] },
+            { name: 'PSCD', expressions: ['PSCD.TAcc', 'PSCD.DAcc'] },
+        ],
     },
 
     getCategories() {
