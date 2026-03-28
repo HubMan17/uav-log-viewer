@@ -234,7 +234,15 @@
         </div>
     </div>
 
-    <!-- Application Scripts -->
+    <!-- Third-party Libraries -->
+    <link rel="stylesheet" href="libs/cesium/widgets.css">
+    <script src="libs/cesium/Cesium.js"></script>
+    <script>
+        // Configure Cesium base URL for Workers/Assets
+        if (typeof Cesium !== 'undefined') {
+            window.CESIUM_BASE_URL = 'libs/cesium/';
+        }
+    </script>
     <script src="libs/plotly/plotly-basic.min.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/state.js"></script>

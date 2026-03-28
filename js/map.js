@@ -53,12 +53,13 @@ const MapViewer = {
         }
 
         if (!this.initialized) {
-            // Cesium ion default access token for terrain
-            Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMzI0YjM2ZC01OWQ3LTRmZTItOGYyZS01MjRhZjRlYWIzNjgiLCJpZCI6MjQxMTcsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1ODQ5NzcyMTB9.Sza31wVi-wq-2VhBk_V-oD3HxhQFPT6MQJfb0Q0u3f0';
-
             try {
+                // Use OpenStreetMap tiles (works offline if cached, online otherwise)
+                const osmProvider = new Cesium.OpenStreetMapImageryProvider({
+                    url: 'https://a.tile.openstreetmap.org/'
+                });
+
                 this.viewer = new Cesium.Viewer('cesium-viewer', {
-                    terrainProvider: Cesium.createWorldTerrain(),
                     animation: false,
                     timeline: false,
                     baseLayerPicker: false,
@@ -69,10 +70,15 @@ const MapViewer = {
                     sceneModePicker: false,
                     selectionIndicator: false,
                     navigationHelpButton: false,
-                    imageryProvider: new Cesium.OpenStreetMapImageryProvider({
-                        url: 'https://a.tile.openstreetmap.org/'
-                    })
+                    imageryProvider: osmProvider,
+                    terrain: undefined,
+                    requestRenderMode: true,
+                    maximumRenderTimeChange: Infinity
                 });
+
+                // Suppress Cesium ion warning
+                this.viewer.cesiumWidget.creditContainer.style.display = 'none';
+
                 this.initialized = true;
             } catch (e) {
                 console.warn('CesiumJS init failed:', e);
@@ -232,22 +238,96 @@ const MapViewer = {
         const traj = State.trajectories[State.trajectorySource];
         if (!traj || traj.lat.length === 0) return;
 
-        const positions = [];
-        for (let i = 0; i < traj.lat.length; i++) {
-            if (traj.lat[i] === 0 && traj.lng[i] === 0) continue;
-            positions.push(Cesium.Cartesian3.fromDegrees(
-                traj.lng[i], traj.lat[i], traj.alt[i] || 0
-            ));
+        this.trajectoryEntities = [];
+
+        // Draw trajectory segments colored by flight mode
+        if (State.flightModeChanges.length > 0 && traj.time) {
+            let modeIdx = 0;
+            let segPositions = [];
+            let segColor = State.flightModeChanges[0]?.color || '#4fc3f7';
+
+            for (let i = 0; i < traj.lat.length; i++) {
+                if (traj.lat[i] === 0 && traj.lng[i] === 0) continue;
+
+                // Check if mode changed
+                while (modeIdx < State.flightModeChanges.length - 1 &&
+                       traj.time[i] >= State.flightModeChanges[modeIdx + 1].timeUS) {
+                    modeIdx++;
+                    // End current segment and start new one
+                    if (segPositions.length > 1) {
+                        const entity = this.viewer.entities.add({
+                            polyline: {
+                                positions: segPositions,
+                                width: 3,
+                                material: Cesium.Color.fromCssColorString(segColor),
+                                clampToGround: false
+                            }
+                        });
+                        this.trajectoryEntities.push(entity);
+                    }
+                    segPositions = segPositions.length > 0 ? [segPositions[segPositions.length - 1]] : [];
+                    segColor = State.flightModeChanges[modeIdx]?.color || '#4fc3f7';
+                }
+
+                segPositions.push(Cesium.Cartesian3.fromDegrees(
+                    traj.lng[i], traj.lat[i], traj.alt[i] || 0
+                ));
+            }
+
+            // Final segment
+            if (segPositions.length > 1) {
+                const entity = this.viewer.entities.add({
+                    polyline: {
+                        positions: segPositions,
+                        width: 3,
+                        material: Cesium.Color.fromCssColorString(segColor),
+                        clampToGround: false
+                    }
+                });
+                this.trajectoryEntities.push(entity);
+            }
+        } else {
+            // Single color trajectory
+            const positions = [];
+            for (let i = 0; i < traj.lat.length; i++) {
+                if (traj.lat[i] === 0 && traj.lng[i] === 0) continue;
+                positions.push(Cesium.Cartesian3.fromDegrees(
+                    traj.lng[i], traj.lat[i], traj.alt[i] || 0
+                ));
+            }
+
+            if (positions.length > 0) {
+                const entity = this.viewer.entities.add({
+                    polyline: {
+                        positions: positions,
+                        width: 3,
+                        material: Cesium.Color.fromCssColorString('#4fc3f7'),
+                        clampToGround: false
+                    }
+                });
+                this.trajectoryEntities.push(entity);
+            }
         }
 
-        this.trajectoryEntity = this.viewer.entities.add({
-            polyline: {
-                positions: positions,
-                width: 3,
-                material: new Cesium.ColorMaterialProperty(Cesium.Color.fromCssColorString('#4fc3f7')),
-                clampToGround: false
-            }
-        });
+        // Home marker
+        if (traj.lat.length > 0 && !(traj.lat[0] === 0 && traj.lng[0] === 0)) {
+            this.viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(traj.lng[0], traj.lat[0], traj.alt[0] || 0),
+                point: { pixelSize: 10, color: Cesium.Color.LIME, outlineColor: Cesium.Color.WHITE, outlineWidth: 2 },
+                label: {
+                    text: 'Home',
+                    font: '12px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    pixelOffset: new Cesium.Cartesian2(0, -18),
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    outlineWidth: 2,
+                    outlineColor: Cesium.Color.BLACK
+                }
+            });
+        }
+
+        // Store first entity as the main one for zoom
+        this.trajectoryEntity = this.trajectoryEntities[0];
     },
 
     drawWaypoints() {
@@ -276,8 +356,10 @@ const MapViewer = {
     },
 
     zoomToTrajectory() {
-        if (!this.viewer || !this.trajectoryEntity) return;
-        this.viewer.zoomTo(this.trajectoryEntity);
+        if (!this.viewer) return;
+        if (this.trajectoryEntities && this.trajectoryEntities.length > 0) {
+            this.viewer.zoomTo(this.viewer.entities);
+        }
     },
 
     updateVehiclePosition: Utils.throttle(function (timeUS) {
@@ -294,14 +376,30 @@ const MapViewer = {
         if (lat === 0 && lon === 0) return;
 
         if (MapViewer.viewer && typeof Cesium !== 'undefined') {
+            const position = Cesium.Cartesian3.fromDegrees(lon, lat, alt);
             if (!MapViewer.vehicleEntity) {
                 MapViewer.vehicleEntity = MapViewer.viewer.entities.add({
-                    position: Cesium.Cartesian3.fromDegrees(lon, lat, alt),
-                    point: { pixelSize: 10, color: Cesium.Color.RED }
+                    position: position,
+                    point: {
+                        pixelSize: 12,
+                        color: Cesium.Color.RED,
+                        outlineColor: Cesium.Color.WHITE,
+                        outlineWidth: 2
+                    }
                 });
             } else {
-                MapViewer.vehicleEntity.position = Cesium.Cartesian3.fromDegrees(lon, lat, alt);
+                MapViewer.vehicleEntity.position = position;
             }
+
+            // Camera follow mode
+            if (State.cameraType === 'follow') {
+                MapViewer.viewer.camera.lookAt(
+                    position,
+                    new Cesium.HeadingPitchRange(0, -Math.PI / 4, 200)
+                );
+            }
+
+            MapViewer.viewer.scene.requestRender();
         } else if (MapViewer.canvas && MapViewer._mapTransform) {
             // 2D fallback vehicle marker
             MapViewer.draw2DMap();
@@ -318,8 +416,8 @@ const MapViewer = {
     }, 30),
 
     updateVisibility() {
-        if (this.trajectoryEntity) {
-            this.trajectoryEntity.show = State.showTrajectory;
+        if (this.trajectoryEntities) {
+            this.trajectoryEntities.forEach(e => { e.show = State.showTrajectory; });
         }
         this.waypointEntities.forEach(e => { e.show = State.showWaypoints; });
         this.fenceEntities.forEach(e => { e.show = State.showFences; });
